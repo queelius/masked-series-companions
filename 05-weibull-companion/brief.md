@@ -44,7 +44,7 @@ the remaining gap: the core MLE methodology for Weibull components.
 
 ## What Already Exists
 
-- `likelihood.model.series.md` R package implements all three model levels
+- `maskedcauses` R package implements all three model levels
 - `vignettes/framework.Rmd` (just created) walks through the theory with code
 - Model selection paper has extensive LRT simulations for the hom/het comparison
 - expo-masked-fim has the exponential Fisher information

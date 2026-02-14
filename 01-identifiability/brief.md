@@ -90,7 +90,7 @@ problem:
 ## Dependencies
 
 - Foundation paper: Theorem (Identifiability), Definition (Separability)
-- R package: `likelihood.model.series.md` for simulation infrastructure
+- R package: `maskedcauses` for simulation infrastructure
 
 ## Estimated Effort
 

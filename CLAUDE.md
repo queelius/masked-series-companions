@@ -10,7 +10,7 @@ This is a **research planning repository** collecting companion paper ideas for 
 - **Exponential companion**: `~/github/papers/expo-masked-fim/`
 - **Model selection**: `~/github/rlang/reliability-estimation-in-series-systems-model-selection/`
 - **Original thesis**: `~/github/papers/reliability-estimation-in-series-systems/`
-- **R packages**: `~/github/rlang/likelihood.model.series.md/`, `~/github/rlang/wei.series.md.c1.c2.c3/`
+- **R packages**: `~/github/rlang/maskedcauses/`, `~/github/rlang/wei.series.md.c1.c2.c3/`
 
 ## Conventions
 

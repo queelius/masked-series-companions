@@ -41,7 +41,7 @@ foundation paper:
 ```
 dfr.dist --> dfr.dist.series --> dfr.lik.series.md --> wei.series.md.c1.c2.c3
                                         |
-                                likelihood.model.series.md
+                                maskedcauses
 ```
 
 ## Research Directions in This Repo

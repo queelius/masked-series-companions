@@ -4,7 +4,7 @@
 
 ## Motivation
 
-The R package `likelihood.model.series.md` implements composable observation
+The R package `maskedcauses` implements composable observation
 functors: `observe_right_censor()`, `observe_left_censor()`,
 `observe_periodic()`, and `observe_mixture()`. The `observe_mixture()` functor
 takes arbitrary observation schemes and randomly assigns each unit to one,
