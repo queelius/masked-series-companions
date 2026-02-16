@@ -33,16 +33,20 @@ foundation paper:
 |-------|------|--------|
 | Foundation (C1-C2-C3 framework) | [`masked-causes-in-series-systems`](../masked-causes-in-series-systems) | Draft complete |
 | Exponential case (closed-form FIM) | [`expo-masked-fim`](../expo-masked-fim) | Draft complete |
-| Model selection (LRT, homogeneous Weibull) | [`reliability-estimation-in-series-systems-model-selection`](../../rlang/reliability-estimation-in-series-systems-model-selection) | Draft complete |
+| Model selection (LRT, nesting chain) | [`maskedselect`](../../rlang/maskedselect) | Refactoring → R package + JOSS |
 | Master's project (original Weibull treatment) | [`reliability-estimation-in-series-systems`](../reliability-estimation-in-series-systems) | Published |
+| Relaxed C1/C2/C3 conditions | [`mdrelax/paper`](../../rlang/mdrelax/paper) | Draft |
 
 ### R Package Stack
 
 ```
-dfr.dist --> dfr.dist.series --> dfr.lik.series.md --> wei.series.md.c1.c2.c3
-                                        |
-                                maskedcauses
+flexhaz --> serieshaz --> maskedhaz
+                              |
+                        maskedcauses       mdrelax
 ```
+
+For the full ecosystem map (all papers, packages, dependencies, and local
+paths), see [ECOSYSTEM.md](ECOSYSTEM.md).
 
 ## Research Directions in This Repo
 
