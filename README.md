@@ -24,7 +24,7 @@ foundation paper:
           |       |       |       |
         Expo    Weibull  Model   Other
         Case    Case     Select  Families
-        (done)  (planned)(exists)(planned)
+        (done)  (planned)(paper) (planned)
 ```
 
 ### Existing Papers/Repos
@@ -33,7 +33,7 @@ foundation paper:
 |-------|------|--------|
 | Foundation (C1-C2-C3 framework) | [`masked-causes-in-series-systems`](../masked-causes-in-series-systems) | Draft complete |
 | Exponential case (closed-form FIM) | [`expo-masked-fim`](../expo-masked-fim) | Draft complete |
-| Model selection (LRT, nesting chain) | [`maskedselect`](../../rlang/maskedselect) | Refactoring → R package + JOSS |
+| Model selection (LRT, nesting chain) | [`masked-series-model-selection`](../masked-series-model-selection) | Paper + simulations; software folded into `maskedcauses` vignette |
 | Master's project (original Weibull treatment) | [`reliability-estimation-in-series-systems`](../reliability-estimation-in-series-systems) | Published |
 | Relaxed C1/C2/C3 conditions | [`mdrelax/paper`](../../rlang/mdrelax/paper) | Draft |
 

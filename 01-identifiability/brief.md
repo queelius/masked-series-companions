@@ -74,6 +74,27 @@ problem:
 - Tradeoff between diagnostic resolution and sample size
 - Possibly related to optimal experimental design (D-optimality)
 
+## Connection to expo-masked-fim (Proposition 2.6)
+
+The expo-masked-fim paper now proves two results directly relevant to this work:
+
+1. **Monotone information loss:** I(K; C_w) is strictly decreasing in w under
+   uniform masking, via K → C_w → C_{w+1} Markov chain + data processing
+   inequality. This provides a formal version of "how identifiability degrades
+   gracefully as masking increases" (Motivation, bullet 3 above).
+
+2. **Max-entropy characterization:** Uniform masking maximizes H(C|K) among
+   C2 models. Combined with the monotonicity result, this means that uniform
+   masking at w = m-1 is the *most pessimistic identifiable* scenario. The
+   optimal diagnostic design problem (Section 5 above) is therefore: what
+   candidate set distribution *minimizes* information loss? The expo paper
+   establishes the worst case; this paper should establish the best case.
+
+The closed-form I(K; C) = ln(m/w) under equal rates also gives a baseline
+for the ablation studies: departures from equal rates will change I(K; C),
+and the deviation quantifies how much the rate heterogeneity itself aids
+identification.
+
 ## Open Questions
 
 - Does the heterogeneous Weibull remain identifiable under complete masking
@@ -81,6 +102,10 @@ problem:
   argument suggests yes, but need formal proof.
 - What is the minimax-optimal candidate set distribution?
 - Connection to compressed sensing / sparse recovery?
+- How does the mutual information I(K; C) relate to the Fisher information
+  about θ? The expo paper provides both quantities; a unified theory would
+  clarify when "more informative diagnostics" (higher I(K;C)) translates to
+  "more precise estimation" (higher FIM eigenvalues).
 
 ## Target Venue
 

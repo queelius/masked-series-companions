@@ -59,19 +59,40 @@ can theta be estimated, as a function of the masking distribution?"
 ## Connection to expo-masked-fim
 
 The `expo-masked-fim` paper already derives the Fisher information matrix for
-exponential components. This paper would:
-1. Generalize to arbitrary parametric families
-2. Decompose into complete-data vs masking-loss components
+exponential components, and now also establishes key information-theoretic
+results about the masking mechanism itself:
+
+**Results already proved in expo-masked-fim (Proposition 2.6):**
+1. Uniform masking maximizes H(C|K) among all C2 masking models for fixed w
+   (the max-entropy characterization of C2)
+2. Under uniform masking, I(K; C_w) is strictly decreasing in w
+   (via a data processing inequality: K → C_w → C_{w+1})
+3. In the symmetric case (equal failure rates), I(K; C_w) = ln(m/w)
+
+**What this paper would add beyond expo-masked-fim:**
+1. Generalize to arbitrary parametric families (not just exponential)
+2. Decompose *Fisher* information into complete-data vs masking-loss components
+   (the expo paper characterizes *mutual* information about K; this paper
+   characterizes *Fisher* information about θ — these are distinct quantities)
 3. Add the study design / effective sample size interpretation
 
 ## Open Questions
 
-- Is there a clean matrix inequality I_masked <= I_complete in the Loewner order?
-- Can we characterize the masking distribution that minimizes information loss
-  for a given expected candidate set size?
+- Is there a clean matrix inequality I_masked ≤ I_complete in the Loewner order?
+  (The expo paper's FIM decomposition as a sum of rank-1 PSD matrices may
+  provide a route: dropping candidate sets can only reduce the sum.)
+- ~~Can we characterize the masking distribution that minimizes information loss
+  for a given expected candidate set size?~~ **Partially answered:** uniform
+  masking maximizes H(C|K), i.e., *maximizes* information loss about the failure
+  cause. The dual question remains: which C2 masking distribution *minimizes*
+  Fisher information loss about θ? These are not the same question.
 - Connection to missing data theory (Little & Rubin): masking as a specific
   missing data mechanism, information loss analogous to fraction of missing
   information
+- How do the two information measures (mutual information I(K;C) about the
+  discrete cause, and Fisher information I(θ) about the continuous parameters)
+  relate? The expo paper provides both; a general theory connecting them would
+  be novel.
 
 ## Target Venue
 

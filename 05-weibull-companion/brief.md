@@ -11,7 +11,7 @@ studies, and practical guidance.
 
 Note: The exponential case is already handled by `expo-masked-fim`. The
 homogeneous vs heterogeneous Weibull model selection question is handled by
-`reliability-estimation-in-series-systems-model-selection`. This paper fills
+`masked-series-model-selection` (software folded into `maskedcauses` vignette). This paper fills
 the remaining gap: the core MLE methodology for Weibull components.
 
 ## Core Content

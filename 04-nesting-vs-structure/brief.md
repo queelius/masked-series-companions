@@ -7,21 +7,25 @@
 This research direction addresses a tension we identified while working on the
 foundation paper's nested Weibull hierarchy.
 
-The purely statistical nesting chain for Weibull series systems is:
+The parametric nesting chain *within* the series family is:
 
 ```
-Single Weibull (2 params)
-  ⊂ Exponential series (m params, for m > 2)
+Homogeneous Exponential (1 param)
+  ⊂ Exponential series (m params)
     ⊂ Homogeneous Weibull series (m+1 params)
       ⊂ Heterogeneous Weibull series (2m params)
 ```
 
 Standard model selection tools (LRT, AIC, BIC) can navigate this chain. But
-the series decomposition itself — the fact that the system has components — is
-an engineering constraint, not a statistical hypothesis. If the LRT prefers a
-single Weibull over an m-component series model, the correct interpretation is
-NOT that the system has no components, but that the data cannot resolve
-component-level structure.
+fitting a **single Weibull** (2 params) to series system data is a different
+kind of simplification — it is model misspecification (ignoring compositional
+structure), not parametric nesting. This distinction matters: the LRT is valid
+for navigating the nesting chain, but comparing a single Weibull to a series
+model is a misspecification-vs-truth comparison, not a nested hypothesis test.
+
+If the data cannot resolve component-level structure, the correct interpretation
+is NOT that the system has no components, but that the data lack the information
+to separate them.
 
 This creates a genuine methodological tension: statistical parsimony says
 "use the simpler model," but engineering knowledge says "the components exist."
@@ -61,7 +65,7 @@ Frame this as a distinction between prediction and estimation goals.
 
 The foundation paper's Remark (Nested models within a family) gestures at
 this issue with a one-line forward reference. The model selection paper
-(reliability-estimation-in-series-systems-model-selection) addresses the
+(`masked-series-model-selection`) addresses the
 homogeneous vs heterogeneous Weibull question empirically but doesn't
 address the deeper question of whether to decompose at all.
 
