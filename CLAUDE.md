@@ -8,7 +8,7 @@ This is a **research planning repository** collecting companion paper ideas for 
 
 - **Foundation paper**: `~/github/papers/masked-causes-in-series-systems/`
 - **Exponential companion**: `~/github/papers/expo-masked-fim/`
-- **Model selection**: `~/github/rlang/reliability-estimation-in-series-systems-model-selection/`
+- **Model selection**: `~/github/papers/masked-series-model-selection/`
 - **Original thesis**: `~/github/papers/reliability-estimation-in-series-systems/`
 - **R packages**: `~/github/rlang/maskedcauses/`, `~/github/rlang/wei.series.md.c1.c2.c3/`
 

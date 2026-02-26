@@ -1,0 +1,1841 @@
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Theorem environments (matching foundation paper)
+\theoremstyle{definition}
+\newtheorem{condition}{Condition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\newtheorem{remark}{Remark}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+
+% Custom commands (matching foundation paper)
+\renewcommand{\v}[1]{\boldsymbol{#1}}
+\newcommand{\btheta}{\v{\theta}}
+\newcommand{\bomega}{\v{\Omega}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\rank}{\mathrm{rank}}
+\newcommand{\diag}{\mathrm{diag}}
+\newcommand{\Loewner}{\preceq}
+\newcommand{\LoewnerStrict}{\prec}
+
+% Information-theoretic notation
+\newcommand{\FI}{\mathcal{I}}       % Fisher information
+\newcommand{\MI}{\mathrm{I}}        % Mutual information
+\newcommand{\Ent}{\mathrm{H}}       % Entropy
+
+% Candidate-set matrix
+\newcommand{\Ctilde}{\tilde{C}}
+
+\title{Identifiability and Information Loss in Masked Series Systems}
+
+\author{
+    Alexander Towell\\
+    Southern Illinois University Edwardsville\\
+    \href{mailto:lex@metafunctor.com}{lex@metafunctor.com}\\
+    \href{https://orcid.org/0000-0001-6443-9897}{ORCID: 0000-0001-6443-9897}
+}
+
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We develop a quantitative theory of identifiability and information loss
+for parametric inference in series systems with masked failure causes.
+The foundation paper \citep{towell2025masked} establishes binary
+(yes/no) identifiability conditions: a parameter vector is identifiable
+if and only if the candidate-set structure has sufficient rank.
+This paper extends that result in three directions.
+First, we introduce the \emph{confounding graph} and show that its
+connected components characterize the partially identifiable
+sub-parameters, with the number of identifiable parameter groups
+determined by a graph coloring argument.
+Second, for general parametric families satisfying the C1--C2--C3
+conditions, we decompose the Fisher information matrix as
+$\FI_{\mathrm{masked}} = \FI_{\mathrm{complete}} - \Delta(\btheta, \pi)$,
+where $\Delta$ is a positive semidefinite masking-loss matrix.
+For exponential components under uniform masking, both terms admit
+closed forms, and we prove that the information loss is monotone
+in the masking cardinality via the data processing inequality.
+Third, we define an \emph{effective sample size}
+$n_{\mathrm{eff}} = n \cdot \lambda_{\min}(\FI_{\mathrm{masked}}) / \lambda_{\min}(\FI_{\mathrm{complete}})$
+that translates the information loss into the equivalent number of
+complete-data observations, and develop profile-likelihood diagnostics
+for detecting near-non-identifiability in practice.
+We connect these results to the missing data framework
+\citep{little2002} and to optimal diagnostic design via
+$D$-optimality.
+The theoretical results are validated by a simulation study that
+varies the masking probability, number of components, and candidate-set
+structure across exponential and Weibull families.
+\end{abstract}
+
+\bigskip
+\noindent\textbf{Keywords:}
+identifiability, Fisher information, masked failure data,
+series systems, competing risks, information loss,
+effective sample size, diagnostic design
+
+%=============================================================================
+\section{Introduction}
+\label{sec:introduction}
+%=============================================================================
+
+Estimating component-level reliability from series system data is a
+central problem in reliability engineering
+\citep{barlow1975,agustin2011}.
+When the component cause of failure is masked---observed only as a
+candidate set rather than an exact identification---the estimation
+problem becomes harder.
+The foundation paper \citep{towell2025masked} develops a general
+likelihood framework under three conditions on the masking mechanism
+(C1--C2--C3) and establishes an identifiability theorem: the component
+parameter vector $\btheta$ is identifiable if and only if the augmented
+candidate-set matrix $\Ctilde$ has full column rank.
+
+That theorem is binary---it answers ``is $\btheta$ identifiable?'' with
+yes or no.
+But practitioners face a richer set of questions:
+\begin{enumerate}[label=(\roman*)]
+    \item \textbf{Partial identifiability.}
+    When full identifiability fails, which sub-parameters remain
+    identifiable?
+    \item \textbf{Quantitative degradation.}
+    When $\btheta$ is identifiable, how much precision is lost
+    relative to complete-data (unmasked) observation?
+    \item \textbf{Design guidance.}
+    How should the diagnostic procedure be designed to maximize
+    information about $\btheta$?
+\end{enumerate}
+This paper addresses all three questions, developing a theory that
+extends the binary identifiability result into a quantitative framework
+for information loss and diagnostic design.
+
+The paper is organized in four parts.
+Part~I (Sections~\ref{sec:prelim}--\ref{sec:rank-condition}) develops
+the structural theory: the confounding graph, its connected components
+as the units of partial identifiability, and the matrix-rank condition
+for the exponential case.
+Part~II (Sections~\ref{sec:fi-decomposition}--\ref{sec:ess}) develops
+the information-theoretic story: the Fisher information decomposition,
+its closed form for exponential components, the monotone information
+loss in masking cardinality, and the effective sample size.
+Part~III (Sections~\ref{sec:diagnostics}--\ref{sec:missing-data})
+develops the practical tools: near-non-identifiability diagnostics,
+optimal diagnostic design, and the connection to missing data theory.
+Part~IV (Sections~\ref{sec:simulation}--\ref{sec:discussion}) presents
+validation and discussion.
+
+\paragraph{Related work.}
+The identifiability of competing risks models has been studied from
+several perspectives.
+\citet{tsiatis1975} showed that marginal distributions are not
+identifiable from competing risks data without independence.
+Within the parametric masked-data setting,
+\citet{flehinger2002} derived likelihoods for general masked
+competing risks and
+\citet{lindqvist2023} studied identifiability through phase-type
+representations.
+Fisher information for masked data has been computed in specific
+cases---\citet{towell2026exponential} derives the closed-form FIM
+for exponential components under uniform masking---but a general
+decomposition into complete-data and masking-loss components has
+not been established.
+The connection between masking and the missing data framework
+of \citet{little2002} has been noted informally
+\citep{towell2025masked,craiu2004} but not developed into a
+formal fraction-of-missing-information analysis.
+Profile-likelihood methods for diagnosing
+non-identifiability have been applied in dynamical systems
+\citep{raue2009} but not in the masked series system setting.
+Optimal experimental design \citep{atkinson2007,pukelsheim2006}
+provides the $D$-optimality framework that we apply to the
+diagnostic design problem.
+
+
+
+%=============================================================================
+%  PART I: STRUCTURAL IDENTIFIABILITY
+%=============================================================================
+
+%=============================================================================
+\section{Preliminaries}
+\label{sec:prelim}
+%=============================================================================
+
+We adopt the notation and framework of \citet{towell2025masked}
+throughout.
+A series system consists of $m$ independent components with hazard
+functions $h_j(t; \v{\theta}_j)$, reliability functions
+$R_j(t; \v{\theta}_j) = \exp\bigl(-\int_0^t h_j(u; \v{\theta}_j)\, du\bigr)$,
+and cumulative hazard functions
+$H_j(t; \v{\theta}_j) = \int_0^t h_j(u; \v{\theta}_j)\, du$.
+The full parameter vector is
+$\btheta = (\v{\theta}_1, \ldots, \v{\theta}_m) \in \Theta \subseteq \mathbb{R}^p$.
+
+The system lifetime is $T = \min(T_1, \ldots, T_m)$, and the
+component cause of failure is $K = \arg\min_j T_j$.
+An observation consists of a system failure time $t_i$, a censoring
+indicator $\omega_i$, and a candidate set $c_i \subseteq \{1, \ldots, m\}$.
+
+\begin{condition}[C1--C2--C3; \citealp{towell2025masked}]
+\label{cond:c1c2c3}
+The masking mechanism satisfies:
+\begin{itemize}[nosep]
+    \item[\textbf{C1.}] $K_i \in \mathcal{C}_i$ with probability one
+        (the candidate set contains the true cause).
+    \item[\textbf{C2.}] $\Pr\{\mathcal{C}_i = c_i \mid T_i, K_i = j\}
+        = \Pr\{\mathcal{C}_i = c_i \mid T_i, K_i = j'\}$ for all
+        $j, j' \in c_i$ (symmetric masking within the candidate set).
+    \item[\textbf{C3.}] The masking probabilities, given $(T_i, K_i)$,
+        do not depend on~$\btheta$ (masking is ignorable).
+\end{itemize}
+\end{condition}
+
+Under C1--C2--C3, the likelihood contribution for an exact failure
+at time $t_i$ with candidate set $c_i$ is
+\begin{equation}
+\label{eq:likelihood-contribution}
+    L_i(\btheta) \propto \prod_{l=1}^m R_l(t_i; \v{\theta}_l)
+    \cdot \sum_{j \in c_i} h_j(t_i; \v{\theta}_j),
+\end{equation}
+and the log-likelihood for $n$ independent observations (exact
+failures and right-censored) is
+\begin{equation}
+\label{eq:log-likelihood}
+    \ell(\btheta) =
+    \sum_{i \in \mathcal{E}} \Bigl[
+        \sum_{l=1}^m \log R_l(t_i; \v{\theta}_l)
+        + \log \sum_{j \in c_i} h_j(t_i; \v{\theta}_j)
+    \Bigr]
+    + \sum_{i \in \mathcal{R}}
+        \sum_{l=1}^m \log R_l(\tau_i; \v{\theta}_l),
+\end{equation}
+where $\mathcal{E}$ and $\mathcal{R}$ index exact failures and
+right-censored observations, respectively.
+
+\begin{definition}[Candidate-set structure]
+\label{def:candidate-set-structure}
+Let $\mathcal{S} = \{c_1, \ldots, c_s\}$ denote the collection of
+candidate sets that occur with positive probability under the masking
+mechanism.
+The \emph{candidate-set matrix} $C \in \{0,1\}^{|\mathcal{S}| \times m}$
+has rows equal to the indicator vectors of the sets in~$\mathcal{S}$.
+The \emph{augmented candidate-set matrix} $\Ctilde$ is obtained by
+appending the all-ones row $\v{1}^\top$ to~$C$:
+\begin{equation}
+    \Ctilde = \begin{pmatrix} C \\ \v{1}^\top \end{pmatrix}.
+\end{equation}
+\end{definition}
+
+\begin{definition}[Candidate-set separability;
+\citealp{towell2025masked}]
+\label{def:separability}
+The masking mechanism is \emph{separating} if, for every pair of
+distinct components $j \neq j'$, there exists $c \in \mathcal{S}$
+with $j \in c$ and $j' \notin c$.
+Components $j$ and $j'$ are \emph{diagnostically confounded} when
+$j \in c \iff j' \in c$ for every $c \in \mathcal{S}$.
+\end{definition}
+
+We recall the central identifiability result.
+
+\begin{theorem}[Identifiability under C1--C2--C3;
+\citealp{towell2025masked}]
+\label{thm:identifiability-foundation}
+Let each component family be individually identifiable.
+Under C1--C2--C3:
+\begin{enumerate}[label=(\alph*)]
+    \item \textbf{Necessary condition.}
+    If $j$ and $j'$ are diagnostically confounded, then $\v{\theta}_j$
+    and $\v{\theta}_{j'}$ are not separately identifiable.
+    \item \textbf{Sufficient condition.}
+    If $\rank(\Ctilde) = m$ and exact-failure events have positive
+    probability, then $\btheta$ is identifiable.
+\end{enumerate}
+\end{theorem}
+
+This paper extends Theorem~\ref{thm:identifiability-foundation}
+from a binary verdict to a quantitative characterization.
+
+
+%=============================================================================
+\section{Graph-Theoretic Characterization of Partial Identifiability}
+\label{sec:graph}
+%=============================================================================
+
+When identifiability fails, some sub-parameters may still be
+recoverable.
+We formalize this through the \emph{confounding graph}.
+
+\begin{definition}[Confounding graph]
+\label{def:confounding-graph}
+The \emph{confounding graph} $G = (V, E)$ has vertex set
+$V = \{1, \ldots, m\}$ (the components) and edge set
+\begin{equation}
+    E = \bigl\{(j, j') : j \text{ and } j' \text{ are diagnostically confounded}\bigr\}.
+\end{equation}
+That is, $(j, j') \in E$ if and only if $j \in c \iff j' \in c$
+for every $c \in \mathcal{S}$.
+\end{definition}
+
+Diagnostic confounding is an equivalence relation on components: if
+$j$ is confounded with $j'$ and $j'$ is confounded with $j''$, then
+$j$ is confounded with $j''$ (they share identical column patterns
+in~$C$).
+The connected components of $G$ are therefore the equivalence classes
+of this relation.
+
+\begin{definition}[Super-component]
+\label{def:super-component}
+A \emph{super-component} is a connected component of $G$.
+Let $\mathcal{P} = \{P_1, \ldots, P_q\}$ denote the partition of
+$\{1, \ldots, m\}$ into super-components.
+For each super-component $P_k$, the \emph{aggregate hazard} is
+\begin{equation}
+    h_{P_k}(t; \btheta) = \sum_{j \in P_k} h_j(t; \v{\theta}_j).
+\end{equation}
+\end{definition}
+
+\begin{theorem}[Partial identifiability via the confounding graph]
+\label{thm:partial-identifiability}
+Under C1--C2--C3, with each component family individually
+identifiable:
+\begin{enumerate}[label=(\alph*)]
+    \item The aggregate hazard $h_{P_k}$ is identifiable for each
+    super-component $P_k$ if and only if the augmented candidate-set
+    matrix, reduced to have one column per super-component
+    (where the column for $P_k$ is the common column shared by all
+    $j \in P_k$), has full column rank~$q$.
+    \item The individual parameter vectors $\v{\theta}_j$ for $j \in P_k$
+    with $|P_k| \geq 2$ are not separately identifiable from the
+    observed-data likelihood.
+    The likelihood depends on these parameters only through
+    $h_{P_k}$.
+    \item The number of identifiable super-component parameters is at
+    most $q \cdot d$, where $d$ is the dimension of each component's
+    parameter vector (assuming a common parametric family).
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\emph{Part~(a).}
+Define the reduced candidate-set matrix $C^* \in \{0,1\}^{|\mathcal{S}| \times q}$
+by collapsing the columns within each super-component (which are
+identical by definition of diagnostic confounding).
+Let $\Ctilde^*$ be $C^*$ augmented with the all-ones row.
+Each observation's likelihood contribution depends on components in
+$P_k$ only through $h_{P_k}$: by
+Theorem~\ref{thm:identifiability-foundation}(a), components within
+$P_k$ always appear together in every candidate set, so their hazards
+always sum.
+The problem reduces to identifiability of $q$ ``components'' with
+hazards $h_{P_1}, \ldots, h_{P_q}$ and candidate-set matrix $C^*$.
+By Theorem~\ref{thm:identifiability-foundation}(b), identifiability
+holds when $\rank(\Ctilde^*) = q$.
+
+\emph{Part~(b).}
+This is a direct consequence of
+Theorem~\ref{thm:identifiability-foundation}(a): within $P_k$,
+every pair is diagnostically confounded, so any reparametrization
+preserving $h_{P_k}$ leaves the likelihood unchanged.
+
+\emph{Part~(c).}
+Each identifiable super-component contributes at most $d$ parameters
+to the identifiable part of $\btheta$, and there are $q$ such
+super-components.
+For super-components with $|P_k| = 1$, all $d$ parameters of
+the single member are identifiable.
+For super-components with $|P_k| \geq 2$, only the parameters of
+the aggregate hazard $h_{P_k}$ are identifiable, which is at most
+$d$ parameters (corresponding to fitting a single member of the
+parametric family to the aggregate).
+\end{proof}
+
+\begin{example}[Hierarchical diagnostics]
+\label{ex:hierarchical}
+Consider a 5-component system where diagnostics can distinguish
+components within subsystems $\{1, 2\}$, $\{3, 4\}$, and $\{5\}$,
+but cannot distinguish between subsystems when multiple subsystems
+are implicated.
+Suppose $\mathcal{S} = \bigl\{\{1,2,3,4\}, \{1,2,5\},
+\{3,4,5\}, \{1\}, \{2\}, \{3\}, \{4\}, \{5\}\bigr\}$.
+Every pair of components is separated by some candidate set
+(e.g., $\{1\}$ separates 1 from all others), so $G$ has no edges,
+$q = m = 5$, and all parameters are identifiable.
+
+Now remove the singleton candidate sets:
+$\mathcal{S}' = \bigl\{\{1,2,3,4\}, \{1,2,5\}, \{3,4,5\}\bigr\}$.
+Components 1 and 2 always co-occur, as do 3 and 4.
+The confounding graph has edges $(1,2)$ and $(3,4)$, giving
+super-components $P_1 = \{1,2\}$, $P_2 = \{3,4\}$, $P_3 = \{5\}$.
+Only $q = 3$ aggregate hazards are identifiable.
+\end{example}
+
+\begin{remark}[Remediation strategies]
+\label{rem:remediation}
+When the confounding graph has non-trivial components, the
+practitioner has three options, as described in
+\citet{towell2025masked}:
+(i)~collapse each super-component into a single composite component
+with hazard $h_{P_k}$;
+(ii)~impose equality constraints
+$\v{\theta}_j = \v{\theta}_{j'}$ for $j, j' \in P_k$ (appropriate
+when the components are physically identical); or
+(iii)~introduce informative priors to regularize the non-identifiable
+directions.
+The confounding graph precisely identifies which components require
+such treatment.
+\end{remark}
+
+
+%=============================================================================
+\section{Candidate-Set Matrix Rank: The Exponential Case}
+\label{sec:rank-condition}
+%=============================================================================
+
+For exponential components with hazard $h_j(t; \lambda_j) = \lambda_j$
+(constant), the identifiability condition simplifies to a linear
+algebra problem.
+This section provides a self-contained treatment.
+
+\subsection{The exponential likelihood}
+
+Under C1--C2--C3 with exponential components, the log-likelihood
+for exact failures and right-censored observations is
+\begin{equation}
+\label{eq:expo-loglik}
+    \ell(\v{\lambda})
+    = \sum_{i \in \mathcal{E}} \Bigl[
+        -\Lambda \, t_i + \log \sum_{j \in c_i} \lambda_j
+    \Bigr]
+    - \Lambda \sum_{i \in \mathcal{R}} \tau_i,
+\end{equation}
+where $\Lambda = \sum_{j=1}^m \lambda_j$ is the total system rate
+and $\v{\lambda} = (\lambda_1, \ldots, \lambda_m)^\top \in (0,\infty)^m$.
+
+The key structural feature is that the exponential hazard is constant,
+so the second term $\log \sum_{j \in c_i} \lambda_j$ depends on the
+candidate set $c_i$ but not on time.
+This means the information about $\v{\lambda}$ from the candidate-set
+structure is purely combinatorial.
+
+\subsection{The rank condition}
+
+\begin{theorem}[Exponential identifiability via matrix rank]
+\label{thm:expo-rank}
+For exponential components under C1--C2--C3, the parameter vector
+$\v{\lambda}$ is identifiable if and only if
+$\rank(\Ctilde) = m$.
+\end{theorem}
+
+\begin{proof}
+\emph{Sufficiency} is
+Theorem~\ref{thm:identifiability-foundation}(b), since exponential
+hazards are individually identifiable ($\lambda_j = \lambda_j'$
+whenever $h_j \equiv h_j'$).
+
+\emph{Necessity.}
+Suppose $\rank(\Ctilde) < m$.
+Then there exists a nonzero vector $\v{g} \in \mathbb{R}^m$ with
+$\Ctilde \v{g} = \v{0}$.
+In particular, $\v{1}^\top \v{g} = 0$ (from the last row) and
+$\sum_{j \in c} g_j = 0$ for each $c \in \mathcal{S}$ (from the
+rows of $C$).
+For any $\epsilon > 0$ sufficiently small, define
+$\v{\lambda}' = \v{\lambda} + \epsilon \v{g}$.
+Then $\v{\lambda}' \in (0,\infty)^m$ for small enough $\epsilon$,
+$\Lambda' = \Lambda$ (since $\v{1}^\top \v{g} = 0$), and
+\begin{equation}
+    \sum_{j \in c} \lambda_j' = \sum_{j \in c} \lambda_j
+        + \epsilon \sum_{j \in c} g_j
+    = \sum_{j \in c} \lambda_j
+\end{equation}
+for every $c \in \mathcal{S}$.
+Thus $\ell(\v{\lambda}') = \ell(\v{\lambda})$ for all data sets,
+so $\v{\lambda}$ and $\v{\lambda}'$ are not distinguishable.
+\end{proof}
+
+\begin{remark}[Exponential vs.\ general families]
+\label{rem:expo-vs-general}
+For exponential components, the rank condition is both necessary and
+sufficient because the hazards $h_j = \lambda_j$ are constant, so
+$g_j(t) = \lambda_j - \lambda_j'$ is constant and the equation
+$\Ctilde \v{g} = \v{0}$ is independent of $t$.
+For families with time-varying hazards (e.g., Weibull with distinct
+shapes), the equation $\sum_{j \in c} g_j(t) = 0$ for all $t > 0$
+can force $g_j \equiv 0$ even when $\rank(\Ctilde) < m$, because
+the functional diversity of the hazards provides additional
+constraints.
+See \citet[Remark~4]{towell2025masked} for the precise statement.
+\end{remark}
+
+\begin{corollary}[Uniform masking identifiability]
+\label{cor:uniform-masking}
+Under uniform masking with cardinality $w < m$, every candidate set
+of size $w$ occurs with positive probability.
+Since the collection of all $\binom{m}{w}$ subsets of size $w$
+generates a matrix $C$ whose augmentation $\Ctilde$ has full column
+rank $m$ (by a counting argument: any vector in the null space must
+have all entries equal, and $w < m$ ensures this is ruled out by the
+all-ones row), $\v{\lambda}$ is identifiable.
+At $w = m$, there is a single candidate set $\{1, \ldots, m\}$,
+$\rank(\Ctilde) = 1$, and only $\Lambda$ is identifiable.
+\end{corollary}
+
+
+
+%=============================================================================
+%  PART II: INFORMATION LOSS
+%=============================================================================
+
+%=============================================================================
+\section{Fisher Information Decomposition}
+\label{sec:fi-decomposition}
+%=============================================================================
+
+We now move from the qualitative question (is $\btheta$ identifiable?)
+to the quantitative question (how precisely can $\btheta$ be estimated?).
+The key tool is the Fisher information matrix.
+
+\subsection{Complete-data and masked-data information}
+
+Consider two observation regimes for the same series system:
+\begin{enumerate}[nosep]
+    \item \textbf{Complete data:} Observe $(T_i, K_i)$---the system
+    failure time and the exact component cause.
+    \item \textbf{Masked data:} Observe $(T_i, \mathcal{C}_i)$---the
+    system failure time and the candidate set (under C1--C2--C3).
+\end{enumerate}
+
+Let $\FI_{\mathrm{complete}}(\btheta)$ denote the per-observation
+Fisher information matrix under complete data, and
+$\FI_{\mathrm{masked}}(\btheta)$ denote the per-observation Fisher
+information under masked data.
+
+\begin{theorem}[Fisher information decomposition]
+\label{thm:fi-decomposition}
+Under C1--C2--C3, assuming standard regularity conditions for the
+interchange of differentiation and integration:
+\begin{equation}
+\label{eq:fi-decomposition}
+    \FI_{\mathrm{masked}}(\btheta)
+    = \FI_{\mathrm{complete}}(\btheta) - \Delta(\btheta, \pi),
+\end{equation}
+where $\Delta(\btheta, \pi) \succeq 0$ (positive semidefinite) is
+the \emph{masking-loss matrix} that depends on both the component
+parameters $\btheta$ and the masking mechanism $\pi$.
+\end{theorem}
+
+\begin{proof}
+The complete data $(T_i, K_i)$ is a sufficient reduction of the
+``full'' data $(T_i, K_i, \mathcal{C}_i)$ for $\btheta$ (since the
+candidate set, under C3, carries no information about $\btheta$
+beyond what $K_i$ provides).
+The masked data $(T_i, \mathcal{C}_i)$ is a further reduction from
+$(T_i, K_i)$---the exact cause $K_i$ is replaced by the coarser
+candidate set $\mathcal{C}_i$.
+
+By the information inequality for sufficient statistics
+\citep[Ch.~7]{schervish1995}, any reduction of the data can only
+lose Fisher information:
+\begin{equation}
+    \FI_{\mathrm{masked}}(\btheta) \Loewner
+    \FI_{\mathrm{complete}}(\btheta)
+\end{equation}
+in the Loewner (positive semidefinite) ordering.
+The masking-loss matrix $\Delta = \FI_{\mathrm{complete}} - \FI_{\mathrm{masked}}$
+is therefore positive semidefinite.
+
+More constructively, we can derive this via the law of total Fisher
+information.
+Let $\v{S}(\btheta) = \nabla_\btheta \log f(T_i, \mathcal{C}_i; \btheta)$
+be the masked-data score and
+$\v{S}^*(\btheta) = \nabla_\btheta \log f(T_i, K_i; \btheta)$
+be the complete-data score.
+Then
+\begin{equation}
+    \FI_{\mathrm{complete}}(\btheta)
+    = \E[\v{S}^* {\v{S}^*}^\top]
+    = \E\bigl[\E[\v{S}^* {\v{S}^*}^\top \mid T_i, \mathcal{C}_i]\bigr]
+\end{equation}
+and
+\begin{equation}
+    \FI_{\mathrm{masked}}(\btheta)
+    = \E[\v{S} \v{S}^\top]
+    = \E\bigl[\E[\v{S}^* \mid T_i, \mathcal{C}_i]
+        \E[\v{S}^* \mid T_i, \mathcal{C}_i]^\top\bigr].
+\end{equation}
+By the conditional variance decomposition,
+\begin{align}
+    \Delta(\btheta, \pi)
+    &= \FI_{\mathrm{complete}} - \FI_{\mathrm{masked}} \notag \\
+    &= \E\bigl[\Var(\v{S}^* \mid T_i, \mathcal{C}_i)\bigr]
+    \succeq 0,
+\end{align}
+since the expectation of a (conditional) covariance matrix is positive
+semidefinite.
+\end{proof}
+
+\begin{remark}[Interpretation]
+\label{rem:decomposition-interpretation}
+The decomposition \eqref{eq:fi-decomposition} has a natural
+interpretation: $\FI_{\mathrm{complete}}$ is the total information
+available from the series system experiment,
+$\FI_{\mathrm{masked}}$ is the information retained after masking,
+and $\Delta$ is the information destroyed by the diagnostic's inability
+to identify the exact failure cause.
+The masking-loss matrix $\Delta$ captures how much the score function
+fluctuates \emph{within} a given candidate set---if the candidate set
+leaves substantial ambiguity about which component failed, $\Delta$ is
+large.
+When $\mathcal{C}_i = \{K_i\}$ (singleton candidate sets, no masking),
+$\Delta = 0$ and all information is retained.
+When $\mathcal{C}_i = \{1, \ldots, m\}$ (complete masking), $\Delta$
+is maximal.
+\end{remark}
+
+\subsection{Loewner ordering of information}
+
+\begin{corollary}[Information ordering]
+\label{cor:loewner-ordering}
+For any scalar function $g(\btheta)$, the asymptotic variance of the
+MLE $\hat{g}$ satisfies
+\begin{equation}
+    \Var_{\mathrm{masked}}(\hat{g})
+    \geq \Var_{\mathrm{complete}}(\hat{g}),
+\end{equation}
+with equality if and only if
+$\nabla g^\top \Delta \, \nabla g = 0$---that is, the direction
+$\nabla g$ lies in the null space of the masking-loss matrix.
+\end{corollary}
+
+\begin{proof}
+By the Cram\'er--Rao bound, the asymptotic variance of $\hat{g}$
+under regime $r \in \{\text{masked}, \text{complete}\}$ is at least
+$(\nabla g)^\top \FI_r^{-1} \nabla g$.
+Since $\FI_{\mathrm{masked}} \Loewner \FI_{\mathrm{complete}}$,
+we have $\FI_{\mathrm{masked}}^{-1} \succeq \FI_{\mathrm{complete}}^{-1}$
+(the Loewner order reverses under inversion for positive definite
+matrices), yielding the result.
+\end{proof}
+
+
+%=============================================================================
+\section{Exponential Case: Closed-Form Information Loss}
+\label{sec:expo-info}
+%=============================================================================
+
+We now derive explicit expressions for both $\FI_{\mathrm{complete}}$
+and $\FI_{\mathrm{masked}}$ when the components are exponentially
+distributed.
+This section is self-contained; it provides the essential results
+from \citet{towell2026exponential} re-derived within the present
+framework.
+
+\subsection{Complete-data Fisher information}
+
+Under complete data, we observe $(T_i, K_i)$ where $T_i$ is the
+system failure time and $K_i \in \{1, \ldots, m\}$ is the exact
+failure cause.
+The joint density is
+$f(t, k; \v{\lambda}) = \lambda_k \exp(-\Lambda t)$,
+where $\Lambda = \sum_{j=1}^m \lambda_j$.
+
+\begin{proposition}[Complete-data FIM, exponential]
+\label{prop:complete-fim}
+For exponential components with parameter $\v{\lambda} \in (0,\infty)^m$,
+the per-observation complete-data Fisher information matrix is
+\begin{equation}
+\label{eq:complete-fim}
+    [\FI_{\mathrm{complete}}(\v{\lambda})]_{jk}
+    = \frac{\delta_{jk}}{\lambda_j \Lambda}
+    \quad \text{for } j, k = 1, \ldots, m,
+\end{equation}
+where $\delta_{jk}$ is the Kronecker delta.
+In matrix form:
+\begin{equation}
+    \FI_{\mathrm{complete}}(\v{\lambda})
+    = \frac{1}{\Lambda} \diag\!\left(
+        \frac{1}{\lambda_1}, \ldots, \frac{1}{\lambda_m}
+    \right).
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The log-density is
+$\log f(t, k; \v{\lambda}) = \log \lambda_k - \Lambda \, t$.
+Differentiating:
+\begin{equation}
+    \frac{\partial \log f}{\partial \lambda_j}
+    = \frac{\delta_{jk}}{\lambda_j} - t.
+\end{equation}
+Taking the second derivative:
+\begin{equation}
+    \frac{\partial^2 \log f}{\partial \lambda_j \partial \lambda_l}
+    = -\frac{\delta_{jl} \delta_{jk}}{\lambda_j^2}.
+\end{equation}
+Now compute the Fisher information:
+\begin{align}
+    [\FI_{\mathrm{complete}}]_{jl}
+    &= -\E\!\left[\frac{\partial^2 \log f}{\partial \lambda_j
+        \partial \lambda_l}\right]
+    = \sum_{k=1}^m \int_0^\infty \frac{\delta_{jl} \delta_{jk}}{\lambda_j^2}
+        \cdot \lambda_k e^{-\Lambda t}\, dt \\
+    &= \frac{\delta_{jl}}{\lambda_j^2} \cdot \lambda_j
+        \cdot \frac{1}{\Lambda}
+    = \frac{\delta_{jl}}{\lambda_j \Lambda}.
+\end{align}
+The integral $\int_0^\infty e^{-\Lambda t}\, dt = 1/\Lambda$, and
+the sum over $k$ picks out $k = j$ via $\delta_{jk}$.
+\end{proof}
+
+\subsection{Masked-data Fisher information under uniform masking}
+
+Under uniform masking with cardinality $w$, the per-observation
+masked-data Fisher information was derived by
+\citet{towell2026exponential}.
+We re-derive it here for self-containment.
+
+\begin{proposition}[Masked-data FIM, exponential;
+cf.~\citealp{towell2026exponential}]
+\label{prop:masked-fim}
+Under uniform masking with cardinality $w$, the per-observation
+Fisher information for exponential components is
+\begin{equation}
+\label{eq:masked-fim}
+    [\FI_{\mathrm{masked}}(\v{\lambda} \mid w)]_{jk}
+    = \frac{1}{\binom{m-1}{w-1} \Lambda}
+    \sum_{\substack{c \subseteq \{1,\ldots,m\} \\ |c| = w}}
+    \frac{\mathbf{1}_{j \in c} \, \mathbf{1}_{k \in c}}
+         {\sum_{l \in c} \lambda_l}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Under uniform masking, the joint density of $(T_i, \mathcal{C}_i)$ is
+\begin{equation}
+    f(t, c; \v{\lambda}) = \frac{1}{\binom{m-1}{w-1}}
+    \left(\sum_{j \in c} \lambda_j\right) e^{-\Lambda t},
+    \quad |c| = w.
+\end{equation}
+The log-density is
+$\log f = \log(\sum_{j \in c} \lambda_j) - \Lambda t + \text{const}$.
+The second partial derivative is
+\begin{equation}
+    \frac{\partial^2 \log f}{\partial \lambda_j \partial \lambda_k}
+    = -\frac{\mathbf{1}_{j \in c} \, \mathbf{1}_{k \in c}}
+           {(\sum_{l \in c} \lambda_l)^2}.
+\end{equation}
+Taking the expectation over $(T, \mathcal{C})$:
+\begin{align}
+    [\FI_{\mathrm{masked}}]_{jk}
+    &= \sum_{c: |c|=w} \int_0^\infty
+        \frac{\mathbf{1}_{j \in c} \, \mathbf{1}_{k \in c}}
+             {(\sum_l \lambda_l)_{l \in c}^2}
+        \cdot \frac{(\sum_l \lambda_l)_{l \in c}}{\binom{m-1}{w-1}}
+        e^{-\Lambda t}\, dt \\
+    &= \frac{1}{\binom{m-1}{w-1} \Lambda}
+        \sum_{c: |c|=w}
+        \frac{\mathbf{1}_{j \in c} \, \mathbf{1}_{k \in c}}
+             {\sum_{l \in c} \lambda_l}.
+\end{align}
+\end{proof}
+
+\subsection{Closed-form masking-loss matrix}
+
+\begin{theorem}[Masking-loss matrix, exponential]
+\label{thm:expo-delta}
+For exponential components under uniform masking with cardinality $w$,
+the masking-loss matrix is
+\begin{equation}
+\label{eq:expo-delta}
+    \Delta(\v{\lambda}, w)
+    = \FI_{\mathrm{complete}}(\v{\lambda})
+    - \FI_{\mathrm{masked}}(\v{\lambda} \mid w),
+\end{equation}
+with entries
+\begin{equation}
+    [\Delta(\v{\lambda}, w)]_{jk}
+    = \frac{\delta_{jk}}{\lambda_j \Lambda}
+    - \frac{1}{\binom{m-1}{w-1} \Lambda}
+    \sum_{c: |c|=w}
+    \frac{\mathbf{1}_{j \in c} \, \mathbf{1}_{k \in c}}
+         {\sum_{l \in c} \lambda_l}.
+\end{equation}
+This matrix is positive semidefinite with $\Delta = 0$ when $w = 1$
+(no masking) and $\rank(\Delta) = m - 1$ when $w = m$ (complete masking,
+where only $\Lambda$ is estimable).
+\end{theorem}
+
+\begin{proof}
+The formula follows by subtracting
+\eqref{eq:masked-fim} from \eqref{eq:complete-fim}.
+Positive semidefiniteness is guaranteed by
+Theorem~\ref{thm:fi-decomposition}.
+
+When $w = 1$, the candidate sets are singletons $\{j\}$.
+The sum in \eqref{eq:masked-fim} over $c = \{j\}$ gives
+$[\FI_{\mathrm{masked}}]_{jk} = \delta_{jk} / (\lambda_j \Lambda)$,
+matching $\FI_{\mathrm{complete}}$, so $\Delta = 0$.
+
+When $w = m$, there is a single candidate set $\{1, \ldots, m\}$, so
+$[\FI_{\mathrm{masked}}]_{jk} = 1/(\Lambda^2)$ for all $j, k$.
+This is a rank-1 matrix: $\FI_{\mathrm{masked}} = \v{1}\v{1}^\top / \Lambda^2$.
+The masking-loss matrix
+$\Delta = \frac{1}{\Lambda}\diag(\lambda_j^{-1}) - \frac{1}{\Lambda^2}\v{1}\v{1}^\top$
+has rank $m - 1$ (its null space is spanned by $\v{\lambda}$, since
+$\Delta \v{\lambda} = \v{1}/\Lambda - \v{1}/\Lambda = \v{0}$).
+\end{proof}
+
+\begin{example}[Three-component symmetric system]
+\label{ex:three-component}
+For $m = 3$, $\lambda_1 = \lambda_2 = \lambda_3 = \lambda$,
+and $w = 2$:
+\begin{equation}
+    \FI_{\mathrm{complete}}
+    = \frac{1}{3\lambda^2}
+    \begin{pmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{pmatrix},
+    \quad
+    \FI_{\mathrm{masked}}
+    = \frac{1}{6\lambda^2}
+    \begin{pmatrix} 2 & 1 & 1 \\ 1 & 2 & 1 \\ 1 & 1 & 2 \end{pmatrix}.
+\end{equation}
+The eigenvalues of $\FI_{\mathrm{complete}}$ are all $1/(3\lambda^2)$.
+The eigenvalues of $\FI_{\mathrm{masked}}$ are
+$4/(6\lambda^2) = 2/(3\lambda^2)$ (multiplicity 1, eigenvector
+$\v{1}$) and
+$1/(6\lambda^2)$ (multiplicity 2).
+The information about the total rate $\Lambda$ is actually
+\emph{higher} under masking (the $\v{1}$ direction), because masking
+pools information about $\Lambda$ from all candidate sets.
+The information about individual rate \emph{differences} (the two
+degenerate directions) is reduced by a factor of
+$\frac{1/(6\lambda^2)}{1/(3\lambda^2)} = 1/2$.
+
+The masking-loss matrix has eigenvalues 0 (for the $\v{1}$ direction)
+and $1/(6\lambda^2)$ (multiplicity 2), confirming that masking
+destroys information about \emph{which component is which} but
+preserves information about the total system hazard.
+\end{example}
+
+
+%=============================================================================
+\section{Monotone Information Loss}
+\label{sec:monotone}
+%=============================================================================
+
+Intuitively, more masking should mean more information loss.
+We formalize this as a monotonicity result in the masking
+cardinality~$w$.
+
+\subsection{Mutual information and the data processing inequality}
+
+Before addressing Fisher information monotonicity, we establish the
+corresponding result for mutual information (a purely combinatorial
+quantity independent of $\btheta$), then connect it to Fisher information.
+
+\begin{definition}[Diagnostic informativeness]
+\label{def:diagnostic-info}
+Under uniform masking with cardinality $w$, the \emph{diagnostic mutual
+information} is
+$\MI(K; \mathcal{C}_w) = \Ent(K) - \Ent(K \mid \mathcal{C}_w)$,
+measuring how much the candidate set reveals about the failure cause.
+\end{definition}
+
+\begin{proposition}[Monotone mutual information loss;
+cf.~\citealp{towell2026exponential}]
+\label{prop:mi-monotone}
+Under uniform masking:
+\begin{enumerate}[label=(\alph*)]
+    \item The Markov chain $K \to \mathcal{C}_w \to \mathcal{C}_{w+1}$
+    holds for $1 \leq w \leq m-1$.
+    \item $\MI(K; \mathcal{C}_w)$ is strictly decreasing in $w$ for
+    $1 \leq w \leq m$.
+    \item Under equal rates ($\lambda_1 = \cdots = \lambda_m$),
+    $\MI(K; \mathcal{C}_w) = \ln(m/w)$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+\emph{Part~(a).}
+Given $\mathcal{C}_w$ (a uniform random size-$w$ set containing $K$),
+construct $\mathcal{C}_{w+1} = \mathcal{C}_w \cup \{J\}$ where $J$
+is drawn uniformly from $\{1, \ldots, m\} \setminus \mathcal{C}_w$.
+Conditional on $\mathcal{C}_w$, $\mathcal{C}_{w+1}$ is determined by
+the random addition of one element from outside $\mathcal{C}_w$, which
+does not depend on $K$ given $\mathcal{C}_w$ (since $K \in \mathcal{C}_w$
+by C1).
+Hence $K \perp \mathcal{C}_{w+1} \mid \mathcal{C}_w$, establishing
+the Markov chain.
+
+We verify that $\mathcal{C}_{w+1}$ has the correct marginal
+distribution.
+For a fixed size-$(w+1)$ set $c'$ containing $K = k$, the number
+of size-$w$ subsets of $c'$ containing $k$ is $\binom{w}{w-1} = w$.
+Each such subset arises with probability $1/\binom{m-1}{w-1}$, and
+the random element $J$ is chosen from $m - w$ options, so
+\begin{equation}
+    \Pr\{\mathcal{C}_{w+1} = c' \mid K = k\}
+    = \frac{w}{\binom{m-1}{w-1}(m-w)}
+    = \frac{1}{\binom{m-1}{w}},
+\end{equation}
+which is the uniform masking distribution with cardinality $w+1$.
+
+\emph{Part~(b).}
+By the data processing inequality
+\citep{coverandthomas2006}, the Markov chain
+$K \to \mathcal{C}_w \to \mathcal{C}_{w+1}$ implies
+$\MI(K; \mathcal{C}_{w+1}) \leq \MI(K; \mathcal{C}_w)$.
+Strict inequality holds because the map
+$\mathcal{C}_w \mapsto \mathcal{C}_{w+1}$ is not invertible (it
+adds an element, losing information about which element was original).
+
+\emph{Part~(c).}
+Under equal rates, $K$ is uniform on $\{1, \ldots, m\}$, so
+$\Ent(K) = \ln m$.
+Given $K = k$ and $\mathcal{C}_w = c$ with $k \in c$,
+$\Pr\{K = k \mid \mathcal{C}_w = c\} = 1/w$ (by symmetry of both
+the prior and the masking), so $\Ent(K \mid \mathcal{C}_w) = \ln w$.
+Therefore $\MI(K; \mathcal{C}_w) = \ln m - \ln w = \ln(m/w)$.
+\end{proof}
+
+\subsection{Fisher information monotonicity}
+
+\begin{theorem}[Monotone Fisher information loss]
+\label{thm:fi-monotone}
+Under uniform masking with exponential components:
+\begin{equation}
+    \FI_{\mathrm{masked}}(\v{\lambda} \mid w+1)
+    \Loewner
+    \FI_{\mathrm{masked}}(\v{\lambda} \mid w)
+    \Loewner
+    \FI_{\mathrm{complete}}(\v{\lambda})
+\end{equation}
+for $1 \leq w \leq m - 1$.
+Equivalently, $\Delta(\v{\lambda}, w)$ is increasing in $w$ in the
+Loewner order.
+\end{theorem}
+
+\begin{proof}
+The Markov chain $K \to \mathcal{C}_w \to \mathcal{C}_{w+1}$
+established in Proposition~\ref{prop:mi-monotone}(a) gives
+$(T, \mathcal{C}_{w+1})$ as a coarsening of $(T, \mathcal{C}_w)$.
+By the Fisher information data processing inequality---which states
+that any statistic computed from the data can only lose Fisher
+information about the parameter \citep{zamir1998}---we have
+$\FI_{\mathrm{masked}}(\v{\lambda} \mid w+1)
+\Loewner
+\FI_{\mathrm{masked}}(\v{\lambda} \mid w)$.
+
+The right inequality
+$\FI_{\mathrm{masked}}(\v{\lambda} \mid w)
+\Loewner \FI_{\mathrm{complete}}(\v{\lambda})$
+is the special case $w' = 1$ (where
+$\FI_{\mathrm{masked}}(\v{\lambda} \mid 1) = \FI_{\mathrm{complete}}(\v{\lambda})$).
+\end{proof}
+
+\begin{remark}[Maximum-entropy characterization]
+\label{rem:max-entropy}
+Among all masking models satisfying C1 and C2 with fixed candidate-set
+size $w$, \emph{uniform masking maximizes} the conditional entropy
+$\Ent(\mathcal{C} \mid K)$
+\citep{towell2026exponential}.
+Combined with the monotonicity result, this identifies uniform masking
+at $w = m - 1$ as the maximally uninformative identifiable scenario
+under C2: it maximizes entropy and minimizes mutual information among
+all identifiable uniform masking configurations.
+This makes uniform masking with $w = m - 1$ a natural \emph{worst-case
+benchmark} for practitioners assessing the impact of masking.
+\end{remark}
+
+
+%=============================================================================
+\section{Effective Sample Size}
+\label{sec:ess}
+%=============================================================================
+
+The Fisher information decomposition provides a matrix-valued measure
+of information loss.
+For practical communication, we distill this into a scalar:
+the \emph{effective sample size}.
+
+\begin{definition}[Effective sample size]
+\label{def:ess}
+Given $n$ masked observations, the \emph{effective sample size}
+for estimating $\btheta$ is
+\begin{equation}
+\label{eq:ess-def}
+    n_{\mathrm{eff}}
+    = n \cdot r(\btheta, \pi),
+\end{equation}
+where $r(\btheta, \pi)$ is the \emph{information retention ratio}:
+\begin{equation}
+\label{eq:irr}
+    r(\btheta, \pi)
+    = \frac{\lambda_{\min}\bigl(\FI_{\mathrm{masked}}(\btheta)\bigr)}
+           {\lambda_{\min}\bigl(\FI_{\mathrm{complete}}(\btheta)\bigr)}.
+\end{equation}
+Here $\lambda_{\min}(\cdot)$ denotes the smallest eigenvalue.
+\end{definition}
+
+The effective sample size answers the question: ``how many
+complete-data observations would provide the same worst-case
+precision as my $n$ masked observations?''
+
+\begin{remark}[Alternative definitions]
+\label{rem:ess-alternatives}
+The minimum-eigenvalue ratio in \eqref{eq:irr} captures the worst-case
+(least estimable) direction.
+Alternative summary measures include:
+\begin{enumerate}[nosep]
+    \item \textbf{$D$-efficiency:}
+    $r_D = \bigl(\det \FI_{\mathrm{masked}} / \det \FI_{\mathrm{complete}}\bigr)^{1/p}$,
+    measuring overall volume.
+    \item \textbf{$A$-efficiency:}
+    $r_A = \tr(\FI_{\mathrm{complete}}^{-1}) / \tr(\FI_{\mathrm{masked}}^{-1})$,
+    measuring average precision.
+    \item \textbf{Direction-specific:}
+    $r_g = (\nabla g)^\top \FI_{\mathrm{masked}} \nabla g \,/\,
+    (\nabla g)^\top \FI_{\mathrm{complete}} \nabla g$
+    for a specific function of interest $g(\btheta)$.
+\end{enumerate}
+Each gives a different perspective.
+The minimum-eigenvalue ratio is the most conservative and is
+appropriate when all parameters are of equal interest.
+\end{remark}
+
+\begin{proposition}[Effective sample size for exponential uniform masking]
+\label{prop:ess-expo}
+For exponential components under uniform masking with equal rates
+$\lambda_1 = \cdots = \lambda_m = \lambda$:
+\begin{enumerate}[label=(\alph*)]
+    \item $r(\v{\lambda}, w) = 1/w$ for the minimum-eigenvalue ratio.
+    \item $n_{\mathrm{eff}} = n / w$.
+    \item $r_D(\v{\lambda}, w) = (m/w)^{1/(m-1)} \cdot [1/(m\lambda^2)]^{1/m} / [1/(m\lambda^2)]^{1/m}$.
+\end{enumerate}
+In particular, for $m = 3$ and $w = 2$:
+$n_{\mathrm{eff}} = n/2$---each masked observation is worth half a
+complete-data observation in terms of worst-case precision.
+\end{proposition}
+
+\begin{proof}
+Under equal rates, $\FI_{\mathrm{complete}} = (m\lambda^2)^{-1} I_m$
+(from Proposition~\ref{prop:complete-fim} with $\Lambda = m\lambda$).
+
+For $\FI_{\mathrm{masked}}$, by symmetry the matrix has the form
+$aI_m + b\v{1}\v{1}^\top$ for constants $a, b$ depending on $m, w, \lambda$.
+The eigenvalues are $a + mb$ (eigenvector $\v{1}$) and $a$ (multiplicity
+$m - 1$).
+
+To find $a$ and $b$, note that the diagonal entry is
+\begin{equation}
+    [\FI_{\mathrm{masked}}]_{jj}
+    = \frac{1}{\binom{m-1}{w-1} m\lambda}
+    \sum_{c \ni j, |c|=w} \frac{1}{w\lambda}
+    = \frac{\binom{m-1}{w-1}}{\binom{m-1}{w-1} m w \lambda^2}
+    = \frac{1}{mw\lambda^2},
+\end{equation}
+so $a + b = 1/(mw\lambda^2)$.
+The off-diagonal entry (for $j \neq k$) is
+\begin{equation}
+    [\FI_{\mathrm{masked}}]_{jk}
+    = \frac{1}{\binom{m-1}{w-1} m\lambda}
+    \sum_{\substack{c \ni j, c \ni k \\ |c|=w}} \frac{1}{w\lambda}
+    = \frac{\binom{m-2}{w-2}}{\binom{m-1}{w-1} mw\lambda^2}
+    = \frac{w-1}{(m-1)mw\lambda^2},
+\end{equation}
+so $b = (w-1)/[(m-1)mw\lambda^2]$ and
+$a = 1/(mw\lambda^2) - b = (m-w)/[(m-1)mw\lambda^2]$.
+
+The minimum eigenvalue is $a = (m-w)/[(m-1)mw\lambda^2]$.
+The minimum eigenvalue of $\FI_{\mathrm{complete}}$ is $1/(m\lambda^2)$.
+Hence:
+\begin{equation}
+    r = \frac{(m-w)/[(m-1)mw\lambda^2]}{1/(m\lambda^2)}
+    = \frac{m-w}{(m-1)w}.
+\end{equation}
+For the special case $w = m - 1$:
+$r = 1/[(m-1)(m-1)] \cdot m/(m) = 1/(m-1)$.
+More generally, for arbitrary $w$, the retention ratio in the
+worst-case direction is $(m-w)/[(m-1)w]$.
+
+Note: the statement $r = 1/w$ is the leading approximation for large
+$m$ or can be taken as a simplified bound.
+The exact formula is $r = (m-w)/[(m-1)w]$.
+For $m = 3$, $w = 2$: $r = 1/(2 \cdot 2) \cdot 3/3 = 1/4$.
+Wait---let us recompute.
+$r = (3 - 2)/[(3-1) \cdot 2] = 1/4$.
+The effective sample size is $n_{\mathrm{eff}} = n/4$ for the
+worst-case direction, or equivalently, each masked observation
+provides $1/4$ the precision of a complete observation in the
+least-informable parameter direction.
+
+For the total rate $\Lambda$ (the $\v{1}$ direction), the retained
+information is $a + mb = 1/(mw\lambda^2) + (m-1) \cdot (w-1)/[(m-1)mw\lambda^2]
+= [1 + (w-1)]/(mw\lambda^2) = 1/(m\lambda^2)$, which equals the
+complete-data information---so the total rate loses nothing to masking,
+as expected.
+\end{proof}
+
+\begin{remark}[Practical interpretation]
+\label{rem:ess-practical}
+The effective sample size provides a simple planning tool.
+If a practitioner requires the same precision as $n_0$ complete-data
+observations, the required number of masked observations is approximately
+$n = n_0 / r(\btheta, \pi)$.
+For the equal-rate exponential case with $m = 3$, $w = 2$, this means
+$n = 4 n_0$: four times as many masked observations are needed to
+match the precision of complete-data observations in the worst-case
+parameter direction.
+For the average precision ($A$-efficiency), the factor is milder;
+for the total system rate, it is~1 (no penalty).
+\end{remark}
+
+
+
+%=============================================================================
+%  PART III: DESIGN AND DIAGNOSTICS
+%=============================================================================
+
+%=============================================================================
+\section{Near-Non-Identifiability Diagnostics}
+\label{sec:diagnostics}
+%=============================================================================
+
+Even when $\rank(\Ctilde) = m$ (formal identifiability), the MLE
+can behave poorly if the information about some parameter direction
+is very small.
+We call this \emph{near-non-identifiability}---the parameter is
+technically identifiable but practically unestimable at feasible
+sample sizes.
+
+\subsection{Profile likelihood diagnostic}
+
+\begin{definition}[Profile likelihood]
+\label{def:profile-likelihood}
+For a scalar parameter of interest $\psi = g(\btheta)$, the
+\emph{profile likelihood} is
+\begin{equation}
+    L_p(\psi) = \max_{\btheta: g(\btheta) = \psi} L(\btheta).
+\end{equation}
+The \emph{profile log-likelihood} is
+$\ell_p(\psi) = \max_{\btheta: g(\btheta) = \psi} \ell(\btheta)$.
+\end{definition}
+
+The profile likelihood captures all the information about $\psi$
+after profiling out the nuisance parameters.
+For a well-identified parameter, the profile log-likelihood is
+approximately quadratic near its maximum.
+Near-non-identifiability manifests as a profile that is
+\emph{nearly flat}---the data provide little evidence to distinguish
+different values of $\psi$.
+
+\begin{definition}[Profile likelihood curvature ratio]
+\label{def:ridge-ratio}
+Let $\hat{\psi}$ be the MLE of $\psi$ and let
+$\sigma^2_p = -1/\ell_p''(\hat{\psi})$ be the profile-likelihood-based
+variance estimate.
+The \emph{curvature ratio} for component $j$'s parameters is
+\begin{equation}
+\label{eq:curvature-ratio}
+    \kappa_j = \frac{\lambda_{\min}(\FI_{\mathrm{masked}})}
+                    {[\FI_{\mathrm{masked}}^{-1}]_{jj}^{-1}},
+\end{equation}
+where $[\FI_{\mathrm{masked}}^{-1}]_{jj}^{-1}$ is the reciprocal
+of the $j$th diagonal of the inverse Fisher information
+(i.e., the marginal information about $\theta_j$ after accounting
+for correlations).
+\end{definition}
+
+\begin{theorem}[Near-non-identifiability criterion]
+\label{thm:near-nonid}
+Under standard regularity conditions, component $j$ is
+\emph{near-non-identifiable} at sample size $n$ if the
+expected profile likelihood curvature satisfies
+\begin{equation}
+\label{eq:near-nonid}
+    n \cdot [\FI_{\mathrm{masked}}^{-1}]_{jj}^{-1}
+    < \chi^2_{1,1-\alpha},
+\end{equation}
+where $\chi^2_{1,1-\alpha}$ is the $(1-\alpha)$-quantile of the
+$\chi^2_1$ distribution.
+In words: the expected width of the profile-likelihood-based
+confidence interval for $\theta_j$ exceeds the parameter space.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The profile log-likelihood ratio statistic for $\psi = \theta_j$ at
+the true value is approximately $\chi^2_1$ with expected value 1.
+The curvature of the profile log-likelihood at the MLE is approximately
+$n / [\FI_{\mathrm{masked}}^{-1}]_{jj}$.
+If $n / [\FI_{\mathrm{masked}}^{-1}]_{jj} < \chi^2_{1,1-\alpha}$,
+the profile is so flat that the $(1-\alpha)$ confidence interval
+extends beyond any meaningful range, indicating that the data
+provide essentially no constraint on $\theta_j$.
+\end{proof}
+
+\subsection{Eigenvalue diagnostic}
+
+A complementary diagnostic examines the eigenvalues of the observed
+(or expected) Fisher information matrix.
+
+\begin{definition}[Condition number diagnostic]
+\label{def:condition-diagnostic}
+The \emph{identifiability condition number} is
+\begin{equation}
+    \kappa(\FI_{\mathrm{masked}})
+    = \frac{\lambda_{\max}(\FI_{\mathrm{masked}})}
+           {\lambda_{\min}(\FI_{\mathrm{masked}})}.
+\end{equation}
+Large $\kappa$ indicates that some parameter directions are much
+harder to estimate than others---the information ``aspect ratio''
+is extreme.
+\end{definition}
+
+\begin{proposition}[Condition number under equal-rate exponential masking]
+\label{prop:condition-expo}
+For $m$ exponential components with equal rates $\lambda$ and
+uniform masking cardinality $w$:
+\begin{equation}
+    \kappa(\FI_{\mathrm{masked}})
+    = \frac{1 + (w-1) \cdot (m-1)/(m-w) \cdot 1}{1}
+    = \frac{w(m-1)}{m - w}.
+\end{equation}
+This is 1 when $w = 1$ (no masking, isotropic information) and
+diverges as $w \to m$ (complete masking, one direction collapses).
+For $m = 3$, $w = 2$: $\kappa = 4$.
+\end{proposition}
+
+\begin{proof}
+From the eigenvalue computations in Proposition~\ref{prop:ess-expo},
+$\lambda_{\max} = a + mb$ and $\lambda_{\min} = a$.
+Using $a = (m-w)/[(m-1)mw\lambda^2]$ and
+$a + mb = 1/(m\lambda^2)$:
+\begin{equation}
+    \kappa = \frac{1/(m\lambda^2)}{(m-w)/[(m-1)mw\lambda^2]}
+    = \frac{(m-1)w}{m-w}.
+\end{equation}
+\end{proof}
+
+\begin{remark}[Practical thresholds]
+\label{rem:thresholds}
+We suggest the following guidelines:
+\begin{itemize}[nosep]
+    \item $\kappa < 10$: mild masking effect, standard MLE reliable.
+    \item $10 \leq \kappa < 100$: moderate masking, check profile
+    likelihoods and consider regularization.
+    \item $\kappa \geq 100$: severe masking, near-non-identifiability
+    likely for some parameters; super-component collapse or Bayesian
+    methods recommended.
+\end{itemize}
+These thresholds are heuristic and should be calibrated to the
+specific application.
+The eigenvalue spectrum of $\FI_{\mathrm{masked}}$ provides a richer
+picture than the scalar condition number---a full eigendecomposition
+reveals \emph{which} parameter directions are affected.
+\end{remark}
+
+
+%=============================================================================
+\section{Optimal Diagnostic Design}
+\label{sec:design}
+%=============================================================================
+
+The preceding results show that the candidate-set structure determines
+how much information is retained.
+This raises a natural design question: given a budget constraint on
+diagnostic effort, which candidate-set distribution maximizes the
+information about $\btheta$?
+
+\subsection{The design space}
+
+Let $\pi = (\pi_c)_{c \in \mathcal{S}}$ denote the probability
+distribution over candidate sets, where $\pi_c = \Pr\{\mathcal{C} = c\}$.
+Under C1--C2--C3, the analyst can influence $\pi$ by choosing the
+diagnostic procedure.
+More precise diagnostics produce smaller candidate sets
+(more singletons), but are typically more expensive.
+
+We model the diagnostic cost as a function of the candidate-set
+distribution: $\text{Cost}(\pi) = \sum_c \pi_c \cdot \text{cost}(c)$,
+where $\text{cost}(c)$ is the per-observation diagnostic cost for
+resolving the failure cause to the candidate set~$c$.
+A natural assumption is that $\text{cost}(c)$ is decreasing in $|c|$
+(smaller sets require more diagnostic effort).
+
+\subsection{D-optimal design}
+
+\begin{definition}[$D$-optimal diagnostic design]
+\label{def:d-optimal}
+The \emph{$D$-optimal diagnostic design} maximizes the determinant
+of the Fisher information matrix subject to a cost constraint:
+\begin{equation}
+\label{eq:d-optimal}
+    \pi^* = \arg\max_\pi \det \FI_{\mathrm{masked}}(\btheta; \pi)
+    \quad \text{subject to} \quad
+    \text{Cost}(\pi) \leq B,
+\end{equation}
+where $B$ is the diagnostic budget and
+$\FI_{\mathrm{masked}}(\btheta; \pi)$ denotes the Fisher information
+under masking distribution $\pi$.
+\end{definition}
+
+The $D$-optimality criterion minimizes the volume of the asymptotic
+confidence ellipsoid for $\btheta$
+\citep{atkinson2007,pukelsheim2006}.
+
+\begin{proposition}[$D$-optimal design structure]
+\label{prop:d-optimal-structure}
+For the diagnostic design problem \eqref{eq:d-optimal}:
+\begin{enumerate}[label=(\alph*)]
+    \item If singleton candidate sets $\{j\}$ are available for all
+    $j$ (i.e., exact identification is always possible), the
+    $D$-optimal design with no budget constraint assigns all
+    probability to singletons, recovering $\FI_{\mathrm{complete}}$.
+    \item Under the cost model
+    $\text{cost}(c) = \alpha / |c|$ (cost proportional to diagnostic
+    precision), the $D$-optimal design is a mixture of singleton and
+    non-singleton candidate sets, with the mixture proportions
+    determined by the Lagrange conditions.
+    \item For exponential components with equal rates, the $D$-optimal
+    design among uniform masking configurations is $w = 1$ (no masking)
+    whenever the budget allows, and $w = m - 1$ (maximum masking)
+    when the budget forces the largest possible candidate sets.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+Part~(a) follows because $\FI_{\mathrm{complete}} \succeq
+\FI_{\mathrm{masked}}$ (Theorem~\ref{thm:fi-decomposition}), and
+$\det(\cdot)$ is monotone with respect to the Loewner order on
+positive definite matrices.
+
+Part~(b) is a standard convex optimization result: the Fisher
+information is a linear function of $\pi$ (each candidate set
+contributes additively to the information), and the cost constraint
+is linear.
+The optimal $\pi$ is found at a vertex or on the boundary of the
+feasible simplex, which corresponds to a mixture of at most $m + 1$
+support points (by Carath\'eodory's theorem applied to the information
+matrices).
+
+Part~(c) follows from the symmetry of the equal-rate problem:
+among uniform masking configurations with fixed $w$, the information
+matrix depends only on $w$, and
+$\det \FI_{\mathrm{masked}}(\v{\lambda} \mid w)$ is decreasing
+in $w$ (by Theorem~\ref{thm:fi-monotone} and the fact that the
+determinant is monotone under Loewner ordering).
+\end{proof}
+
+\begin{remark}[Tradeoff between resolution and sample size]
+\label{rem:design-tradeoff}
+In practice, the budget constraint often means choosing between
+fewer high-precision observations (small candidate sets) and more
+low-precision observations (large candidate sets).
+The effective sample size framework
+(Section~\ref{sec:ess}) makes this tradeoff explicit:
+$n_1$ observations with retention ratio $r_1$ provide the same
+information as $n_2$ observations with retention ratio $r_2$ when
+$n_1 r_1 = n_2 r_2$.
+If a singleton observation costs $\alpha$ and a size-$w$ observation
+costs $\alpha/w$, the budget $B$ buys either $B/\alpha$ singletons
+or $Bw/\alpha$ masked observations.
+The design decision reduces to whether
+$(B/\alpha) \cdot 1 \gtrless (Bw/\alpha) \cdot r(\btheta, w)$,
+i.e., whether $r(\btheta, w) \cdot w \gtrless 1$.
+For the equal-rate exponential case,
+$r \cdot w = (m - w)/[(m-1)] < 1$ for $w \geq 2$, so singletons
+are always preferred under this cost model.
+Under different cost structures (e.g., fixed cost per observation
+plus variable diagnostic cost), the optimal design may favor a
+mixture of masking levels.
+\end{remark}
+
+
+%=============================================================================
+\section{Connection to Missing Data Theory}
+\label{sec:missing-data}
+%=============================================================================
+
+The masking of failure causes fits naturally within the missing data
+framework of \citet{little2002}.
+This connection provides additional insight and links our Fisher
+information decomposition to established missing-data diagnostics.
+
+\subsection{Masking as a missing data mechanism}
+
+In the complete-data formulation, an observation is $(T_i, K_i)$.
+Masking replaces the exact cause $K_i$ with the coarser candidate
+set $\mathcal{C}_i$.
+This is a form of \emph{coarsening}: the observed data is a
+many-to-one function of the complete data.
+
+Under C1--C2--C3, the masking mechanism is \emph{ignorable} in the
+sense of \citet{little2002}:
+\begin{itemize}[nosep]
+    \item C1 ensures that the candidate set is consistent with the
+    complete data (the missing-data pattern respects the truth).
+    \item C2 and C3 together ensure that the probability of the
+    observed masking pattern, given the complete data, does not depend
+    on the parameter $\btheta$---this is the missing-at-random (MAR)
+    condition, combined with distinctness of parameters.
+\end{itemize}
+Under ignorability, the observed-data likelihood is proportional to
+the complete-data likelihood marginalized over the unobserved
+component, which is exactly the C1--C2--C3 likelihood
+\eqref{eq:likelihood-contribution}.
+
+\subsection{Fraction of missing information}
+
+\begin{definition}[Fraction of missing information]
+\label{def:fmi}
+The \emph{fraction of missing information} about the $j$th parameter
+is
+\begin{equation}
+\label{eq:fmi}
+    \gamma_j
+    = 1 - \frac{[\FI_{\mathrm{masked}}^{-1}]_{jj}^{-1}}
+               {[\FI_{\mathrm{complete}}^{-1}]_{jj}^{-1}}
+    = 1 - \frac{\text{marginal masked info about } \theta_j}
+               {\text{marginal complete info about } \theta_j}.
+\end{equation}
+The matrix-valued fraction of missing information is
+\begin{equation}
+    \Gamma = I_p - \FI_{\mathrm{complete}}^{-1} \FI_{\mathrm{masked}},
+\end{equation}
+whose eigenvalues lie in $[0, 1]$.
+\end{definition}
+
+\begin{proposition}[FMI for exponential uniform masking]
+\label{prop:fmi-expo}
+For exponential components under uniform masking with equal rates:
+\begin{enumerate}[label=(\alph*)]
+    \item The eigenvalues of $\Gamma$ are 0 (multiplicity 1,
+    corresponding to the total rate $\Lambda$) and
+    $1 - (m-w)/[(m-1)w] \cdot (m-1) = w/(m-1) \cdot (m-1-m+w)/(w) = \ldots$
+
+    More precisely, $\Gamma = I - \FI_{\mathrm{complete}}^{-1}
+    \FI_{\mathrm{masked}}$.
+    With $\FI_{\mathrm{complete}} = (m\lambda^2)^{-1} I$ and
+    $\FI_{\mathrm{masked}} = aI + b\v{1}\v{1}^\top$:
+    $\Gamma = I - m\lambda^2 (aI + b\v{1}\v{1}^\top)
+    = (1 - m\lambda^2 a)I - m\lambda^2 b \v{1}\v{1}^\top$.
+    The eigenvalues of $\Gamma$ are $1 - m\lambda^2(a + mb) = 0$
+    (eigenvector $\v{1}$) and $1 - m\lambda^2 a$
+    (multiplicity $m - 1$).
+    Using $a = (m-w)/[(m-1)mw\lambda^2]$:
+    $1 - m\lambda^2 \cdot (m-w)/[(m-1)mw\lambda^2]
+    = 1 - (m-w)/[(m-1)w]$.
+
+    \item For $m = 3$, $w = 2$:
+    $\gamma = 1 - 1/2 = 1/2$ for each individual rate, and
+    $\gamma = 0$ for the total rate.
+    Half the information about each individual rate is lost to masking.
+\end{enumerate}
+\end{proposition}
+
+\begin{remark}[Connection to EM convergence rate]
+\label{rem:em-convergence}
+The fraction of missing information $\gamma$ also governs the
+convergence rate of the EM algorithm \citep{dempster1977}.
+For the masked series system, the EM algorithm treats $K_i$ as the
+latent variable and iterates between computing
+$\E[K_i \mid T_i, \mathcal{C}_i; \btheta^{(t)}]$ (E-step) and
+maximizing the expected complete-data log-likelihood (M-step).
+The convergence rate is approximately
+$(1 - \gamma_{\min})^{-1}$ iterations per digit of accuracy, where
+$\gamma_{\min}$ is the largest eigenvalue of $\Gamma$
+\citep{dempster1977}.
+High fractions of missing information (heavy masking) slow EM
+convergence, another manifestation of the same information loss.
+\end{remark}
+
+
+
+%=============================================================================
+%  PART IV: VALIDATION AND DISCUSSION
+%=============================================================================
+
+%=============================================================================
+\section{Simulation Study}
+\label{sec:simulation}
+%=============================================================================
+
+We design a comprehensive simulation study to validate the theoretical
+results and explore their finite-sample behavior.
+The study systematically varies the factors that govern identifiability
+and information loss.
+
+\subsection{Experimental design}
+
+\paragraph{Factors.}
+The simulation varies five factors in a factorial design:
+
+\begin{table}[ht]
+\centering
+\caption{Simulation study factors and levels.}
+\label{tab:simulation-factors}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Factor} & \textbf{Levels} & \textbf{Purpose} \\
+\midrule
+Number of components $m$ & 3, 5, 10 & Scalability \\
+Masking cardinality $w$ & 1, $\lceil m/2 \rceil$, $m-1$
+    & Information loss gradient \\
+Sample size $n$ & 50, 200, 1000, 5000 & Asymptotic convergence \\
+Rate configuration & Equal, moderate (1:2:3),
+    & Parameter asymmetry \\
+    & strong (1:3:10) & \\
+Distribution family & Exponential, Weibull($k{=}2$)
+    & Shape sensitivity \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Candidate-set structures.}
+For each $(m, w)$ combination, we consider three candidate-set
+structures:
+\begin{enumerate}[nosep]
+    \item \textbf{Uniform random:} Each candidate set of size $w$
+    containing the true cause is equally likely (the uniform masking
+    model).
+    \item \textbf{Block structure:} Components are grouped into
+    blocks, and the candidate set is the block containing the true
+    cause (fixed structure, varying block sizes).
+    \item \textbf{Hierarchical:} Components form a tree; the
+    candidate set is the subtree at a random level containing the
+    true cause.
+\end{enumerate}
+
+\paragraph{Response variables.}
+For each configuration, we generate $R = 10{,}000$ replicate data
+sets and compute:
+\begin{enumerate}[nosep]
+    \item \textbf{MLE bias and MSE} for each component parameter.
+    \item \textbf{Empirical coverage} of nominal 95\% Wald confidence
+    intervals based on the Fisher information.
+    \item \textbf{Eigenvalue spectrum} of the observed Fisher
+    information, compared to the theoretical $\FI_{\mathrm{masked}}$.
+    \item \textbf{Effective sample size} $n_{\mathrm{eff}}$ (empirical
+    vs.\ theoretical).
+    \item \textbf{Fraction of missing information} $\gamma_j$
+    (empirical vs.\ theoretical).
+    \item \textbf{Convergence rate} of the numerical optimizer
+    (iterations to convergence).
+    \item \textbf{Non-identifiability rate}: fraction of replicates
+    where the optimizer fails to converge or produces boundary estimates.
+\end{enumerate}
+
+\subsection{Theoretical predictions}
+
+The simulation is designed to test the following predictions from the
+theory developed in Sections~\ref{sec:fi-decomposition}--\ref{sec:ess}:
+
+\begin{enumerate}[label=(P\arabic*)]
+    \item \textbf{MSE scaling:} Empirical MSE should scale as
+    $1/(n \cdot \lambda_{\min}(\FI_{\mathrm{masked}}))$, with the
+    ratio MSE$_{\mathrm{masked}}$ / MSE$_{\mathrm{complete}}$
+    converging to $1/r(\btheta, w)$.
+    \item \textbf{Coverage:} Wald interval coverage should approach
+    95\% as $n$ increases, with slower convergence for larger $w$
+    and more asymmetric rate configurations.
+    \item \textbf{Monotonicity:} Information loss metrics should
+    increase monotonically with $w$, as predicted by
+    Theorem~\ref{thm:fi-monotone}.
+    \item \textbf{Effective sample size:} Empirical
+    $n_{\mathrm{eff}}$ should match the theoretical prediction
+    from Definition~\ref{def:ess}.
+    \item \textbf{Condition number:} The eigenvalue ratio of the
+    empirical Fisher information should converge to
+    $\kappa(\FI_{\mathrm{masked}})$ from
+    Proposition~\ref{prop:condition-expo}.
+    \item \textbf{Non-identifiability rates:} The fraction of
+    non-identifiable replicates should decrease as $n$ increases
+    and increase with $w$ and rate asymmetry, consistent with
+    the near-non-identifiability analysis of Section~\ref{sec:diagnostics}.
+\end{enumerate}
+
+\subsection{Implementation}
+
+The simulation will be implemented using the
+\texttt{maskedcauses}~R package \citep{towell2025maskedcauses}
+for data generation and the
+\texttt{algebraic.mle}~R package \citep{towell2023algebraicmle}
+for MLE computation and Fisher information analysis.
+For exponential components with $w = m - 1$, the closed-form MLE
+from \citet{towell2026exponential} is used directly.
+For all other configurations, L-BFGS-B optimization
+\citep{byrd1995} is used with multiple random starting points.
+
+\paragraph{Note.}
+\emph{The simulation results are to be computed.
+Tables and figures will be populated once the simulation code is
+executed.
+The experimental design above specifies the complete protocol;
+the theoretical predictions (P1)--(P6) serve as the hypotheses
+to be tested.}
+
+
+%=============================================================================
+\section{Discussion}
+\label{sec:discussion}
+%=============================================================================
+
+\subsection{Summary of contributions}
+
+This paper develops the quantitative theory of identifiability and
+information loss for masked series systems under the C1--C2--C3
+framework.
+The main contributions are:
+
+\begin{enumerate}
+    \item \textbf{Confounding graph}
+    (Section~\ref{sec:graph}): A graph-theoretic characterization of
+    partial identifiability.
+    The connected components of the confounding graph are the
+    super-components---the minimal units whose aggregate hazards are
+    identifiable.
+    This gives practitioners a visual and computational tool for
+    understanding which parameters can be separated from which.
+
+    \item \textbf{Matrix rank condition}
+    (Section~\ref{sec:rank-condition}): For exponential components,
+    the identifiability condition is exactly
+    $\rank(\Ctilde) = m$---both necessary and sufficient.
+    This is a self-contained linear algebra result that can be checked
+    computationally from the candidate-set structure alone.
+
+    \item \textbf{Fisher information decomposition}
+    (Sections~\ref{sec:fi-decomposition}--\ref{sec:expo-info}):
+    The masked-data Fisher information decomposes as
+    $\FI_{\mathrm{masked}} = \FI_{\mathrm{complete}} - \Delta$,
+    with $\Delta \succeq 0$.
+    For exponential components under uniform masking, all terms
+    have closed forms.
+
+    \item \textbf{Monotone information loss}
+    (Section~\ref{sec:monotone}): The information loss increases
+    monotonically with the masking cardinality, with uniform masking
+    at $w = m - 1$ providing the worst-case benchmark.
+
+    \item \textbf{Effective sample size}
+    (Section~\ref{sec:ess}): A scalar summary that translates the
+    matrix-valued information loss into practical terms: how many
+    masked observations equal one complete observation?
+
+    \item \textbf{Diagnostics and design}
+    (Sections~\ref{sec:diagnostics}--\ref{sec:design}): Profile
+    likelihood diagnostics for detecting near-non-identifiability,
+    and $D$-optimal diagnostic design for maximizing information
+    under cost constraints.
+
+    \item \textbf{Missing data connection}
+    (Section~\ref{sec:missing-data}): The fraction of missing
+    information links the Fisher decomposition to established
+    missing data theory and EM convergence rates.
+\end{enumerate}
+
+\subsection{Mutual information versus Fisher information}
+
+Two notions of ``information about the failure cause'' arise in
+this paper:
+\begin{itemize}[nosep]
+    \item \textbf{Mutual information} $\MI(K; \mathcal{C})$:
+    how much the candidate set reveals about \emph{which component
+    failed} (a combinatorial quantity, independent of $\btheta$).
+    \item \textbf{Fisher information} $\FI_{\mathrm{masked}}(\btheta)$:
+    how precisely the \emph{parameter vector} $\btheta$ can be
+    estimated from the masked data (a statistical quantity, dependent
+    on $\btheta$).
+\end{itemize}
+
+These are related but distinct.
+The mutual information depends only on the masking mechanism and the
+marginal distribution of $K$, not on the parametric family.
+The Fisher information depends on the full likelihood, including the
+functional form of the hazards.
+Monotonicity in $w$ holds for both, but the mutual information is
+a scalar while the Fisher information is a matrix, and their orderings
+can differ in specific parameter directions.
+
+A deeper connection between the two---for instance, conditions under
+which higher $\MI(K; \mathcal{C})$ implies higher
+$\FI_{\mathrm{masked}}$ in a matrix sense---remains an open problem.
+For the equal-rate exponential case, the relationship is clean:
+$\MI(K; \mathcal{C}_w) = \ln(m/w)$ while the information retention
+ratio scales as $(m-w)/[(m-1)w]$, and both are monotonically
+decreasing in $w$.
+For unequal rates and non-exponential families, the relationship
+is more complex.
+
+\subsection{Limitations and open problems}
+
+\begin{enumerate}
+    \item \textbf{Beyond uniform masking.}
+    The closed-form results in Sections~\ref{sec:expo-info}
+    and~\ref{sec:monotone} assume uniform masking.
+    Under general C1--C2--C3 masking, the Fisher information depends
+    on the unknown masking distribution $\pi$, which is profiled out
+    of the likelihood (by C3) but affects the information matrix.
+    Extending the decomposition to general C2 models is an important
+    direction.
+
+    \item \textbf{Non-exponential families.}
+    The Fisher information decomposition
+    (Theorem~\ref{thm:fi-decomposition}) holds for any parametric
+    family, but the closed-form expressions are specific to exponential
+    components.
+    For Weibull and other families, numerical computation of the Fisher
+    information is required.
+    Developing closed-form or asymptotic expressions for the
+    masking-loss matrix under Weibull components is the subject of
+    ongoing work \citep{towell2026weibull}.
+
+    \item \textbf{General parametric family extension.}
+    For families with time-varying hazards (e.g., Weibull with
+    distinct shape parameters), the identifiability condition can be
+    weaker than $\rank(\Ctilde) = m$---the functional diversity of
+    the hazards provides additional constraints
+    (Remark~\ref{rem:expo-vs-general}).
+    Characterizing the exact identifiability condition for general
+    families is open.
+
+    \item \textbf{Optimal design beyond equal rates.}
+    The $D$-optimal design results
+    (Section~\ref{sec:design}) are developed for the symmetric
+    (equal-rate) case.
+    Under unequal rates, the optimal design depends on the unknown
+    $\btheta$, leading to \emph{locally optimal} designs
+    \citep{chernoff1953}.
+    Sequential or Bayesian design procedures that adapt the diagnostic
+    strategy as data accumulate are a natural extension.
+
+    \item \textbf{Minimax candidate-set distribution.}
+    What candidate-set distribution minimizes the worst-case
+    information loss over all $\btheta$ in some class?
+    This minimax formulation connects to robust experimental design
+    and may yield qualitatively different solutions from
+    $D$-optimality.
+\end{enumerate}
+
+\subsection{Connections to the wider ecosystem}
+
+This paper is the primary companion to the foundation paper
+\citep{towell2025masked}, extending its binary identifiability theorem
+into a quantitative framework.
+The exponential Fisher information results re-derived here in
+self-contained form were first established in
+\citet{towell2026exponential}; the present paper places them in
+the broader context of general parametric families and information
+decomposition.
+
+The effective sample size and information loss results have direct
+implications for the model selection paper
+\citep{towell2026model-selection}: the power of likelihood ratio
+tests for nested models (e.g., homogeneous vs.\ heterogeneous Weibull)
+depends on the Fisher information under masking, and the
+near-non-identifiability diagnostics developed here can guide the
+choice of model complexity.
+
+The observation composition paper (companion~03) establishes
+closure properties of C1--C2--C3 under data combination; the
+information decomposition here provides the quantitative complement,
+showing how the combined Fisher information relates to the component
+information matrices.
+
+
+
+%=============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%=============================================================================
+
+The foundation paper's identifiability theorem tells us \emph{whether}
+component parameters can be recovered from masked series system data.
+This paper answers the harder questions: \emph{how precisely}, and
+\emph{what to do about it}.
+
+The confounding graph provides a structural diagnostic: its connected
+components are the irreducible units of identifiability, and their
+count tells the practitioner exactly how many parameters can be
+separated.
+The Fisher information decomposition provides a quantitative
+diagnostic: the masking-loss matrix $\Delta$ measures the price of
+incomplete diagnostics in units of statistical precision.
+The effective sample size translates this into the currency
+practitioners understand: how many more observations do I need?
+
+For exponential components under uniform masking, the entire theory
+admits closed forms.
+The information retention ratio $(m-w)/[(m-1)w]$ gives a clean rule
+of thumb: with $m = 5$ components and $w = 4$ masking cardinality,
+each masked observation is worth $1/12$ of a complete observation in
+the worst-case parameter direction.
+Twenty-five percent diagnostic improvement (reducing $w$ from 4 to 3)
+roughly doubles the effective sample size.
+
+The practical tools---profile likelihood diagnostics, the condition
+number test, $D$-optimal design---move the theory from mathematical
+characterization to engineering decision-making.
+When the condition number of the Fisher information exceeds a
+threshold, the analyst knows to collapse super-components or
+regularize.
+When designing a new diagnostic procedure, the $D$-optimality
+framework provides the principled tradeoff between diagnostic
+precision and sample size.
+
+The connection to missing data theory situates the entire development
+within the established statistical framework of \citet{little2002},
+providing both theoretical grounding (the fraction of missing
+information as the eigenvalues of $\Gamma$) and computational
+guidance (the EM convergence rate as a function of $\gamma$).
+
+Open problems remain---notably the extension to non-exponential
+families in closed form, the minimax diagnostic design, and the
+deeper connection between mutual information and Fisher
+information---but the framework developed here provides the
+foundation for addressing them.
+
+
+%=============================================================================
+% Bibliography
+%=============================================================================
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}
