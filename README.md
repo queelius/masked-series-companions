@@ -55,11 +55,11 @@ draft content.
 
 | Directory | Working Title | Novelty | Effort |
 |-----------|---------------|---------|--------|
-| [`01-identifiability/`](01-identifiability/) | Identifiability and Diagnostic Design for Masked Series Systems | High | Medium |
-| [`02-information-loss/`](02-information-loss/) | Fisher Information Loss from Masking: Quantifying the Cost of Incomplete Diagnostics | High | Medium |
-| [`03-observation-composition/`](03-observation-composition/) | Composable Observation Schemes for Masked Reliability Data | Medium | Low |
-| [`04-nesting-vs-structure/`](04-nesting-vs-structure/) | Statistical Parsimony vs Physical Structure in Series System Modeling | Medium | Low |
-| [`05-weibull-companion/`](05-weibull-companion/) | MLE for Weibull Series Systems with Masked Failure Causes | Medium | High |
+| [`identifiability-info-loss/`](identifiability-info-loss/) | Identifiability and Information Loss in Masked Series Systems | High | Medium |
+| [`observation-composition/`](observation-composition/) | Composable Observation Schemes for Masked Reliability Data | Medium | Low |
+| [`nesting-vs-structure/`](nesting-vs-structure/) | Statistical Parsimony vs Physical Structure in Series System Modeling | Medium | Low |
+| [`weibull-masked-fim/`](weibull-masked-fim/) | Closed-Form FIM for Weibull Series with Masked Failure Causes | Medium | High |
+| [`deterministic-masking/`](deterministic-masking/) | Information Recovery under Deterministic Masking | — | — |
 
 ## How to Use This Repo
 

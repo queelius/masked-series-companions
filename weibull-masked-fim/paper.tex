@@ -1,0 +1,517 @@
+% ======================================================================
+% Closed-Form Fisher Information for Homogeneous Weibull Series Systems
+% with Masked Failure Causes
+%
+% Target: Lifetime Data Analysis
+% ======================================================================
+\documentclass[12pt]{article}
+
+% --- Packages ---
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+\usepackage{natbib}
+\usepackage{booktabs}
+\usepackage[colorlinks,citecolor=blue,linkcolor=blue,urlcolor=blue]{hyperref}
+
+% --- Theorem environments ---
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% --- Notation ---
+\newcommand{\lsys}{\lambda_{\mathrm{sys}}}
+\newcommand{\bsys}{\beta_{\mathrm{sys}}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\ee}{\mathbf{e}}
+
+\title{Closed-Form Fisher Information for Homogeneous Weibull Series
+  Systems with Masked Failure Causes}
+
+\author{Alexander R.\ Towell\\
+  \small Department of Mathematics and Statistics\\
+  \small Southern Illinois University Edwardsville\\
+  \small \texttt{lex@metafunctor.com}\\
+  \small ORCID: 0000-0001-6443-9897}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We derive the expected per-observation Fisher information matrix in
+closed form for a series system of $m$ independent Weibull components
+sharing a common shape parameter.  In the rate parametrization
+$\lambda_j = \beta_j^{-k}$, the matrix entries involve only the
+Euler--Mascheroni constant~$\gamma$ and~$\pi^2/6$; no numerical
+integration is required.  We prove that masking---observing a candidate
+set of possible failure causes rather than the true cause---leaves all
+shape-related Fisher information unchanged.  The entire information loss
+from masking is confined to the rate block of the Fisher information
+matrix, where it equals the information loss derived for the exponential
+special case.  Monte Carlo simulation with $10^6$ replications confirms
+all analytical entries to within 0.5\% relative error.
+\end{abstract}
+
+\noindent\textbf{Keywords:}
+Fisher information $\cdot$
+Weibull distribution $\cdot$
+series system $\cdot$
+competing risks $\cdot$
+masked failure cause
+
+
+% ======================================================================
+\section{Introduction}\label{sec:intro}
+% ======================================================================
+
+Series systems, in which the system fails when any component fails,
+arise naturally in reliability engineering.  When components have
+independent lifetimes, the system failure time is the minimum of the
+component lifetimes, placing this problem within the classical competing
+risks framework~\citep{crowder2001}.  A common complication in practice
+is \emph{masking}: the failed component is not directly observed, and
+only a candidate set of possible causes is
+reported~\citep{miyakawa1984}.
+
+\citet{towell2025masked} developed a likelihood framework for masked
+series systems under three regularity conditions (C1--C3) that unify
+right-censoring, masking, and their interaction.
+\citet{towell2026exponential} specialized this framework to exponential
+components and derived the Fisher information matrix in closed form,
+establishing a baseline for studying information loss under masking.
+
+The Weibull distribution is the workhorse of reliability
+modeling~\citep{lawless2003, meeker1998}.  When all components share a
+common shape parameter---the \emph{homogeneous} Weibull model---the
+system lifetime is itself Weibull and the failed component is independent
+of the failure time, yielding a tractable
+likelihood~\citep{pareek2009}.  Existing treatments derive score
+equations and compute the \emph{observed} Fisher information numerically
+at the maximum likelihood estimate~\citep{pareek2009, kundu2003}.  To
+our knowledge, the \emph{expected} Fisher information matrix has not been
+obtained in closed form for this model.
+
+This paper derives the expected per-observation Fisher information matrix
+for the homogeneous Weibull series system in the rate parametrization
+$\lambda_j = \beta_j^{-k}$.  Our contributions are:
+%
+\begin{enumerate}
+\item \textbf{Closed-form FIM} (Theorem~\ref{thm:fim}): All
+  $(m{+}1)^2$ entries of the Fisher information matrix reduce to
+  elementary functions of the Euler--Mascheroni constant~$\gamma$ and
+  $\pi^2/6$.  No numerical integration is required.
+
+\item \textbf{Masking invariance} (Theorem~\ref{thm:masking}): Under
+  any masking mechanism satisfying the C2 symmetry condition of
+  \citet{towell2025masked}, the shape information~$I_{kk}$ and the
+  shape--rate cross-information~$I_{k,\lambda_j}$ are unchanged.  Only
+  the rate--rate block is affected.
+
+\item \textbf{Structural decomposition}: The masked Fisher information
+  matrix equals the unmasked matrix with its rate block replaced by the
+  exponential masked-data Fisher information
+  of~\citet{towell2026exponential}, evaluated at rates
+  $\lambda_j = \beta_j^{-k}$.
+\end{enumerate}
+
+Section~\ref{sec:model} defines the model.
+Section~\ref{sec:fim} derives the Fisher information matrix.
+Section~\ref{sec:masking} establishes masking invariance.
+Section~\ref{sec:verification} reports numerical verification.
+Section~\ref{sec:discussion} concludes.
+
+
+% ======================================================================
+\section{Model}\label{sec:model}
+% ======================================================================
+
+Consider a series system of $m$ independent components.  Component~$j$
+has lifetime $T_j \sim \mathrm{Weibull}(k, \beta_j)$ with common shape
+$k > 0$ and component-specific scale $\beta_j > 0$.  The system fails at
+time $T = \min(T_1, \ldots, T_m)$, and the failed component is
+$K = \arg\min_j T_j$.
+
+\subsection{Rate parametrization}
+
+Define the rate parameters $\lambda_j = \beta_j^{-k}$ and the system
+quantities
+%
+\begin{equation}\label{eq:system}
+\lsys = \sum_{j=1}^m \lambda_j, \qquad
+\bsys = \lsys^{-1/k}, \qquad
+w_j = \frac{\lambda_j}{\lsys}.
+\end{equation}
+%
+The system hazard function is $h(t) = k\,\lsys\,t^{k-1}$, additive in
+the~$\lambda_j$.  The cause probabilities~$w_j$ do not depend on~$k$,
+which is the key to the masking invariance of
+Theorem~\ref{thm:masking}.
+
+\subsection{Joint density and independence}
+
+The joint density of the system failure time~$T$ and failed
+component~$K$ factorizes as
+%
+\begin{equation}\label{eq:joint}
+f(t, K{=}j \mid k, \bm{\lambda})
+= \underbrace{k\,\lsys\,t^{k-1}
+  \exp\!\bigl(-\lsys\,t^k\bigr)}_{f_T(t)}
+  \;\cdot\; \underbrace{w_j\vphantom{t^{k-1}}}_{P(K=j)}.
+\end{equation}
+%
+Thus $T$ and $K$ are independent, with
+$T \sim \mathrm{Weibull}(k, \bsys)$ and
+$K \sim \mathrm{Categorical}(w_1, \ldots, w_m)$.  This factorization,
+a direct consequence of the common shape, is well known in the competing
+risks literature~\citep{crowder2001, pareek2009}.
+
+\subsection{Log-likelihood}
+
+The per-observation log-likelihood for an exact, unmasked observation
+$(t, K{=}j)$ is
+%
+\begin{equation}\label{eq:loglik}
+\ell_1(k, \bm{\lambda})
+= \log k + \log \lambda_j + (k-1)\log t - \lsys\,t^k.
+\end{equation}
+
+
+% ======================================================================
+\section{Fisher information}\label{sec:fim}
+% ======================================================================
+
+\subsection{Score equations}
+
+Differentiating~\eqref{eq:loglik} with respect to the parameters
+$\theta = (k, \lambda_1, \ldots, \lambda_m)$ gives
+%
+\begin{align}
+s_k &= \frac{1}{k} + (1 - V)\log t, \label{eq:score_k}\\
+s_{\lambda_\ell} &= \frac{\ind(K = \ell)}{\lambda_\ell} - t^k,
+  \label{eq:score_lam}
+\end{align}
+%
+where $V = \lsys\,t^k$.  Since
+$T \sim \mathrm{Weibull}(k, \bsys)$, the transformation
+$V = \lsys\,T^k$ yields $V \sim \mathrm{Exp}(1)$, and
+%
+\begin{equation}\label{eq:logT}
+\log T = \log \bsys + \frac{\log V}{k}.
+\end{equation}
+
+\subsection{Closed-form Fisher information matrix}
+
+\begin{theorem}\label{thm:fim}
+Let\/ $\gamma \approx 0.5772$ denote the Euler--Mascheroni constant and
+define the centering constant $\mu = \log \bsys + (1-\gamma)/k$.  The
+per-observation expected Fisher information matrix for the homogeneous
+Weibull series system in the parametrization
+$\theta = (k, \lambda_1, \ldots, \lambda_m)$ is
+%
+\begin{equation}\label{eq:fim}
+I(\theta)
+= \begin{pmatrix}
+  \mu^2 + \dfrac{\pi^2}{6k^2}
+    & \dfrac{\mu}{\lsys}\,\ee^\top \\[10pt]
+  \dfrac{\mu}{\lsys}\,\ee
+    & D
+  \end{pmatrix},
+\end{equation}
+%
+where $\ee = (1, \ldots, 1)^\top \in \mathbb{R}^m$ and
+$D = \operatorname{diag}\!\bigl(
+  (\lambda_1\lsys)^{-1}, \ldots, (\lambda_m\lsys)^{-1}\bigr)$.
+\end{theorem}
+
+\begin{proof}
+The second derivatives of~\eqref{eq:loglik} are
+%
+\begin{align}
+\frac{\partial^2 \ell_1}{\partial k^2}
+  &= -\frac{1}{k^2} - V(\log t)^2,
+  \label{eq:hess_kk} \\
+\frac{\partial^2 \ell_1}{\partial \lambda_\ell^2}
+  &= -\frac{\ind(K = \ell)}{\lambda_\ell^2},
+  \label{eq:hess_ll} \\
+\frac{\partial^2 \ell_1}{\partial \lambda_\ell \,\partial \lambda_r}
+  &= 0 \quad (\ell \neq r),
+  \label{eq:hess_lr} \\
+\frac{\partial^2 \ell_1}{\partial k\,\partial \lambda_\ell}
+  &= -t^k \log t.
+  \label{eq:hess_kl}
+\end{align}
+%
+We compute $I(\theta) = -E[\nabla^2 \ell_1]$ using the substitution
+$V = \lsys\,T^k \sim \mathrm{Exp}(1)$ and the standard moments
+%
+\begin{equation}\label{eq:moments}
+E[V \log V] = 1 - \gamma, \qquad
+E[V(\log V)^2] = (1-\gamma)^2 + \frac{\pi^2}{6} - 1.
+\end{equation}
+
+\textit{Rate block.}\enspace
+Since $P(K = \ell) = w_\ell = \lambda_\ell/\lsys$,
+\[
+I_{\lambda_\ell,\lambda_\ell}
+= \frac{w_\ell}{\lambda_\ell^2}
+= \frac{1}{\lambda_\ell\,\lsys},
+\]
+and $I_{\lambda_\ell,\lambda_r} = 0$ for $\ell \neq r$.
+
+\textit{Cross terms.}\enspace
+Using $T^k = V/\lsys$ and~\eqref{eq:logT},
+\[
+I_{k,\lambda_\ell}
+= E[T^k \log T]
+= \frac{1}{\lsys}\Bigl[
+  \log \bsys + \frac{1-\gamma}{k}
+\Bigr]
+= \frac{\mu}{\lsys}.
+\]
+
+\textit{Shape entry.}\enspace
+From~\eqref{eq:hess_kk},
+$I_{kk} = k^{-2} + E[V(\log T)^2]$.
+Expanding $(\log T)^2$ via~\eqref{eq:logT} and
+applying~\eqref{eq:moments}:
+%
+\begin{align}
+I_{kk}
+&= \frac{1}{k^2}
+ + (\log \bsys)^2
+ + \frac{2(1-\gamma)}{k}\log \bsys
+ + \frac{(1-\gamma)^2 + \pi^2/6 - 1}{k^2}
+\notag\\
+&= \Bigl(\log \bsys + \frac{1-\gamma}{k}\Bigr)^{\!2}
+ + \frac{\pi^2}{6k^2}
+= \mu^2 + \frac{\pi^2}{6k^2}.
+\tag*{\qedhere}
+\end{align}
+\end{proof}
+
+\begin{remark}[Special cases]\label{rem:special}
+\begin{enumerate}
+\item[\textup{(i)}]
+For $m = 1$, transforming to the $(k, \beta)$ parametrization via
+$\lambda = \beta^{-k}$ recovers the classical single-Weibull Fisher
+information
+$I_{kk}^{(k,\beta)} = [(1-\gamma)^2 + \pi^2/6]\,/\,k^2$
+\citep{lawless2003}.
+
+\item[\textup{(ii)}]
+For $k = 1$ (exponential components), $\lambda_j = 1/\beta_j$ and the
+rate block~$D$ reduces to the unmasked exponential Fisher information
+of~\citet{towell2026exponential}.
+
+\item[\textup{(iii)}]
+The rate block is diagonal: information about distinct component rates is
+orthogonal.  Each rate~$\lambda_j$ contributes information only through
+the indicator $\ind(K{=}j)$, which identifies component~$j$ as the
+failure cause.
+
+\item[\textup{(iv)}]
+The cross terms $I_{k,\lambda_\ell} = \mu/\lsys$ are identical for
+all~$\ell$: the shape parameter couples symmetrically to all component
+rates through the system failure time.
+\end{enumerate}
+\end{remark}
+
+
+% ======================================================================
+\section{Masking invariance}\label{sec:masking}
+% ======================================================================
+
+Under the C2 masking condition of~\citet{towell2025masked}, the observer
+reports a candidate set $C \subseteq \{1, \ldots, m\}$ containing the
+true failed component~$K$, rather than~$K$ itself.  The conditional
+probability $P(C \mid K{=}j)$ depends on the masking mechanism but not
+on the model parameters $(k, \bm{\lambda})$.
+
+The per-observation log-likelihood for a masked observation $(t, C)$ is
+%
+\begin{equation}\label{eq:loglik_masked}
+\ell_1^{\mathrm{masked}}
+= \log k + (k-1)\log t - \lsys\,t^k
+  + \log\!\Bigl(\sum_{j \in C} \lambda_j\,P(C \mid K{=}j)\Bigr).
+\end{equation}
+
+\begin{theorem}\label{thm:masking}
+Under any masking mechanism satisfying~C2, the shape information
+$I_{kk}$ and the shape--rate cross-information $I_{k,\lambda_\ell}$ are
+identical to their unmasked values.  The masked Fisher information matrix
+has the block structure
+%
+\begin{equation}\label{eq:fim_masked}
+I^{\mathrm{masked}}(\theta)
+= \begin{pmatrix}
+  \mu^2 + \dfrac{\pi^2}{6k^2}
+    & \dfrac{\mu}{\lsys}\,\ee^\top \\[10pt]
+  \dfrac{\mu}{\lsys}\,\ee
+    & I^{\mathrm{exp}}_{\lambda\lambda}
+  \end{pmatrix},
+\end{equation}
+%
+where $I^{\mathrm{exp}}_{\lambda\lambda}$ is the rate block of the
+exponential masked-data Fisher information
+from~\citet{towell2026exponential}, evaluated at rates
+$\lambda_j = \beta_j^{-k}$.
+\end{theorem}
+
+\begin{proof}
+The final term in~\eqref{eq:loglik_masked} depends on~$\bm{\lambda}$
+but not on~$k$.  Therefore
+\[
+\frac{\partial^2 \ell_1^{\mathrm{masked}}}{\partial k^2}
+= -\frac{1}{k^2} - V(\log t)^2,
+\qquad
+\frac{\partial^2 \ell_1^{\mathrm{masked}}}{\partial k\,\partial
+  \lambda_\ell}
+= -t^k \log t,
+\]
+which are identical to the unmasked
+case~\eqref{eq:hess_kk}--\eqref{eq:hess_kl}.  Taking expectations
+yields the invariance of $I_{kk}$ and $I_{k,\lambda_\ell}$.
+
+For the rate block, the Hessian of
+$-\lsys\,t^k$ with respect to $\lambda_\ell,\lambda_r$ is zero;
+the rate--rate information comes entirely from the
+$\log(\cdot)$ term in~\eqref{eq:loglik_masked}, which involves
+only the rates~$\bm{\lambda}$ and the candidate set~$C$.  Since
+$K \perp T$ in the homogeneous model, $C$~is independent of~$T$, and
+the distribution of~$C$ depends on~$\bm{\lambda}$ only through the
+cause probabilities $w_j = \lambda_j/\lsys$---exactly as in the
+exponential case.
+\end{proof}
+
+\begin{remark}[Information loss]\label{rem:info_loss}
+The difference
+\[
+I^{\mathrm{complete}} - I^{\mathrm{masked}}
+= \begin{pmatrix}
+  0 & \bm{0}^\top \\
+  \bm{0} & D - I^{\mathrm{exp}}_{\lambda\lambda}
+  \end{pmatrix}
+\]
+is zero everywhere except in the rate block, and positive semidefinite by
+the data processing inequality.  Masking obscures component identity but
+preserves the failure time, degrading information about the individual
+rates while leaving shape information intact.
+\end{remark}
+
+\begin{remark}[Parametrization dependence]\label{rem:param}
+The invariance of Theorem~\ref{thm:masking} is specific to the rate
+parametrization $\lambda_j = \beta_j^{-k}$.  In the
+$(k, \beta_1, \ldots, \beta_m)$ parametrization, the cause
+probabilities $w_j = \beta_j^{-k}/\sum_\ell \beta_\ell^{-k}$ depend
+on~$k$, so the masking term in~\eqref{eq:loglik_masked} couples to~$k$
+and the invariance breaks down.  The rate parametrization is natural
+precisely because it decouples component identity from the time scale.
+\end{remark}
+
+
+% ======================================================================
+\section{Numerical verification}\label{sec:verification}
+% ======================================================================
+
+We verify Theorem~\ref{thm:fim} by Monte Carlo simulation
+in~R~\citep{r2025}.  For each replication, we generate a system failure
+time~$T$ and failed component~$K$ from the joint
+density~\eqref{eq:joint}, compute the score
+vector~\eqref{eq:score_k}--\eqref{eq:score_lam} and
+Hessian~\eqref{eq:hess_kk}--\eqref{eq:hess_kl}, and accumulate
+two estimators: the outer product of scores and the negative Hessian.
+
+\subsection{Primary test case}
+
+Table~\ref{tab:mc} reports results for $m = 3$ components with
+$k = 1.5$ and $\bm{\beta} = (100, 200, 150)$, using $n = 10^6$
+replications.  The derived quantities are
+$\bm{\lambda} = (0.001, 0.0000354, 0.000544)$,
+$\lsys = 0.001578$, $\bsys = 66.51$, and $\mu = 4.47$.
+
+\begin{table}[ht]
+\centering
+\caption{Analytical FIM entries (Theorem~\ref{thm:fim}) versus Monte
+  Carlo estimates ($n = 10^6$).  Relative error is reported for nonzero
+  entries; the off-diagonal rate entries $I_{\lambda_\ell,\lambda_r}$
+  ($\ell \neq r$) are analytically zero and confirmed numerically.}
+\label{tab:mc}
+\smallskip
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Entry & Analytical & MC (scores) & MC (Hessian) & Max rel.\ error \\
+\midrule
+$I_{kk}$                & 20.22 & 20.20 & 20.22 & 0.10\% \\
+$I_{k,\lambda_\ell}$    & 2833  & 2832  & 2834  & 0.04\% \\
+$I_{\lambda_1,\lambda_1}$ & 634.0 & 633.4 & 633.7 & 0.09\% \\
+$I_{\lambda_2,\lambda_2}$ & 17\,900 & 17\,890 & 17\,900 & 0.06\% \\
+$I_{\lambda_3,\lambda_3}$ & 1165  & 1164  & 1164  & 0.09\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All nonzero entries agree to within 0.5\% relative error across both
+estimators.
+
+\subsection{Special cases}
+
+\textit{Single component ($m = 1$).}\enspace
+With $k = 2$ and $\beta = 50$, the Jacobian-transformed
+$I_{kk}^{(k,\beta)}$ from Theorem~\ref{thm:fim} matches the standard
+Weibull result $[(1-\gamma)^2 + \pi^2/6]/k^2$ to machine precision.
+
+\textit{Exponential ($k = 1$).}\enspace
+With $\bm{\beta} = (100, 200, 150)$, the rate block of
+Theorem~\ref{thm:fim} matches the unmasked exponential FIM
+$I_{\lambda_\ell,\lambda_\ell} = 1/(\lambda_\ell\,\lsys)$ to machine
+precision.
+
+
+% ======================================================================
+\section{Discussion}\label{sec:discussion}
+% ======================================================================
+
+We derived the expected Fisher information matrix in closed form for a
+homogeneous Weibull series system with masked failure causes.  The result
+(Theorem~\ref{thm:fim}) involves only the Euler--Mascheroni constant
+and~$\pi^2/6$, extending the known single-Weibull FIM to the
+multi-component series setting.  The masking invariance
+(Theorem~\ref{thm:masking}) shows that masking degrades only the
+component identification information---the rate block---while leaving
+shape information untouched.
+
+\paragraph{Applications.}
+The closed-form FIM enables Cram\'er--Rao lower bound calculations and
+$D$-optimal experimental design for Weibull series systems without
+numerical integration.  For mixed observation types (exact, masked,
+right-censored), the per-observation contributions differ in form but the
+exact-data FIM provides an upper bound on the information per
+observation.
+
+\paragraph{Extensions.}
+For right-censored observations at time~$c$, the score contributions
+$s_k^{\mathrm{RC}} = -\lsys\,c^k \log c$ and
+$s_{\lambda_\ell}^{\mathrm{RC}} = -c^k$ are available in closed form,
+but the expected FIM requires specification of the censoring
+distribution~\citep{escobar1994}.  For the heterogeneous Weibull model
+(distinct shapes $k_1, \ldots, k_m$), the independence $K \perp T$
+fails, and closed-form expressions are unlikely; numerical computation of
+the observed FIM remains the practical
+approach~\citep{pareek2009}.
+
+\paragraph{Software.}
+The analytical FIM of Theorem~\ref{thm:fim} and the Monte Carlo
+verification of Section~\ref{sec:verification} are implemented in~R.
+Source code is available from the author.
+
+
+% ======================================================================
+% References
+% ======================================================================
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

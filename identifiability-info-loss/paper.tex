@@ -1043,13 +1043,14 @@ appropriate when all parameters are of equal interest.
 For exponential components under uniform masking with equal rates
 $\lambda_1 = \cdots = \lambda_m = \lambda$:
 \begin{enumerate}[label=(\alph*)]
-    \item $r(\v{\lambda}, w) = 1/w$ for the minimum-eigenvalue ratio.
-    \item $n_{\mathrm{eff}} = n / w$.
-    \item $r_D(\v{\lambda}, w) = (m/w)^{1/(m-1)} \cdot [1/(m\lambda^2)]^{1/m} / [1/(m\lambda^2)]^{1/m}$.
+    \item $r(\v{\lambda}, w) = \dfrac{m - w}{(m-1)\,w}$ for the minimum-eigenvalue ratio.
+    \item $n_{\mathrm{eff}} = n \cdot \dfrac{m - w}{(m-1)\,w}$.
+    \item $r_D(\v{\lambda}, w) = \left[\dfrac{m-w}{(m-1)\,w}\right]^{(m-1)/m}$
+    for the $D$-efficiency ratio.
 \end{enumerate}
 In particular, for $m = 3$ and $w = 2$:
-$n_{\mathrm{eff}} = n/2$---each masked observation is worth half a
-complete-data observation in terms of worst-case precision.
+$n_{\mathrm{eff}} = n/4$---each masked observation is worth one quarter of a
+complete-data observation in the worst-case parameter direction.
 \end{proposition}
 
 \begin{proof}
@@ -1088,21 +1089,9 @@ Hence:
     r = \frac{(m-w)/[(m-1)mw\lambda^2]}{1/(m\lambda^2)}
     = \frac{m-w}{(m-1)w}.
 \end{equation}
-For the special case $w = m - 1$:
-$r = 1/[(m-1)(m-1)] \cdot m/(m) = 1/(m-1)$.
-More generally, for arbitrary $w$, the retention ratio in the
-worst-case direction is $(m-w)/[(m-1)w]$.
-
-Note: the statement $r = 1/w$ is the leading approximation for large
-$m$ or can be taken as a simplified bound.
-The exact formula is $r = (m-w)/[(m-1)w]$.
-For $m = 3$, $w = 2$: $r = 1/(2 \cdot 2) \cdot 3/3 = 1/4$.
-Wait---let us recompute.
-$r = (3 - 2)/[(3-1) \cdot 2] = 1/4$.
-The effective sample size is $n_{\mathrm{eff}} = n/4$ for the
-worst-case direction, or equivalently, each masked observation
-provides $1/4$ the precision of a complete observation in the
-least-informable parameter direction.
+For the special case $w = m - 1$: $r = 1/(m-1)^2$.
+For $m = 3$, $w = 2$: $r = 1/4$, so each masked observation
+provides $1/4$ the worst-case precision of a complete observation.
 
 For the total rate $\Lambda$ (the $\v{1}$ direction), the retained
 information is $a + mb = 1/(mw\lambda^2) + (m-1) \cdot (w-1)/[(m-1)mw\lambda^2]
@@ -1117,10 +1106,10 @@ The effective sample size provides a simple planning tool.
 If a practitioner requires the same precision as $n_0$ complete-data
 observations, the required number of masked observations is approximately
 $n = n_0 / r(\btheta, \pi)$.
-For the equal-rate exponential case with $m = 3$, $w = 2$, this means
-$n = 4 n_0$: four times as many masked observations are needed to
-match the precision of complete-data observations in the worst-case
-parameter direction.
+For the equal-rate exponential case with $m = 3$, $w = 2$,
+$r = 1/4$, so $n = 4 n_0$: four times as many masked observations
+are needed to match the precision of complete-data observations in
+the worst-case parameter direction.
 For the average precision ($A$-efficiency), the factor is milder;
 for the total system rate, it is~1 (no penalty).
 \end{remark}

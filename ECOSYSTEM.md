@@ -49,11 +49,11 @@ These live as research briefs in the [`masked-series-companions`](./) repo:
 
 | Directory | Working Title | Novelty |
 |-----------|---------------|---------|
-| [`01-identifiability/`](01-identifiability/) | Identifiability and Diagnostic Design for Masked Series Systems | When can component parameters be separated? Necessary/sufficient conditions on candidate sets. |
-| [`02-information-loss/`](02-information-loss/) | Fisher Information Loss from Masking | How much information does masking destroy? FIM comparison: fully observed vs masked. |
-| [`03-observation-composition/`](03-observation-composition/) | Composable Observation Schemes for Masked Reliability Data | Formal algebra of observation functors (right-censor, periodic inspection, mixtures). |
-| [`04-nesting-vs-structure/`](04-nesting-vs-structure/) | Statistical Parsimony vs Physical Structure | When should grouped components be collapsed vs constrained vs regularized? |
-| [`05-weibull-companion/`](05-weibull-companion/) | MLE for Weibull Series Systems with Masked Failure Causes | Weibull-specific MLE: shape closure, homogeneous vs heterogeneous, simulation studies. |
+| [`identifiability-info-loss/`](identifiability-info-loss/) | Identifiability and Information Loss in Masked Series Systems | Quantitative identifiability: graph-theoretic conditions, FIM decomposition, effective sample size, diagnostic design. (Absorbed 02-information-loss.) |
+| [`observation-composition/`](observation-composition/) | Composable Observation Schemes for Masked Reliability Data | Formal algebra of observation functors (right-censor, periodic inspection, mixtures). |
+| [`nesting-vs-structure/`](nesting-vs-structure/) | Statistical Parsimony vs Physical Structure | When should grouped components be collapsed vs constrained vs regularized? |
+| [`weibull-masked-fim/`](weibull-masked-fim/) | Closed-Form FIM for Weibull Series with Masked Failure Causes | Closed-form Fisher information, masking invariance of shape info, rate-block decomposition. |
+| [`deterministic-masking/`](deterministic-masking/) | Information Recovery under Deterministic Masking | Injective masking recovers complete-data FIM. Submitted to JSPI. |
 
 ---
 
@@ -247,10 +247,10 @@ MLE over the component hazard parameters.
 
 ### FIM Derivation Ownership
 
-Paper 05 (Weibull MLE) is the primary source for the Weibull Fisher information
-matrix derivation. Paper 01 (Identifiability + Info Loss) should cite Paper 05
+weibull-masked-fim (Weibull MLE) is the primary source for the Weibull Fisher information
+matrix derivation. Paper 01 (Identifiability + Info Loss) should cite weibull-masked-fim
 for the Weibull FIM rather than deriving it independently. This creates a
-sequencing dependency: Paper 01 should not be submitted before Paper 05 has at
+sequencing dependency: Paper 01 should not be submitted before weibull-masked-fim has at
 least a circulating draft with the FIM result.
 
 ### "Statistical Indistinguishability" Territory
@@ -267,11 +267,11 @@ statistically invisible. Agreed division:
 
 ### Submission Sequencing
 
-1. **Paper 05** (Weibull MLE) should be drafted first — it is already cited in
+1. **weibull-masked-fim** (Weibull MLE) should be drafted first — it is already cited in
    the foundation paper and has the most clearly defined content
-2. **Foundation paper** should not be submitted until Paper 05 has a circulating
+2. **Foundation paper** should not be submitted until weibull-masked-fim has a circulating
    draft (the `towell2025weibull-series` citation must resolve to something)
-3. **Paper 01** depends on Paper 05's FIM derivation
+3. **Paper 01** depends on weibull-masked-fim's FIM derivation
 4. **Papers 03 and 04** are independent of the above sequencing
 
 ### Prior-Art Surveys
@@ -286,7 +286,7 @@ drafting:
   theory
 - **Paper 04**: model misspecification vs near-non-identifiability tradeoffs,
   decision-theoretic model selection, MDL with known structure
-- **Paper 05**: Weibull series MLE in reliability literature, competing risks
+- **weibull-masked-fim**: Weibull series MLE in reliability literature, competing risks
   Weibull estimation
 
 ---
