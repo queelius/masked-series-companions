@@ -13,18 +13,12 @@ foundation paper:
                   (distribution-agnostic
                    C1-C2-C3 likelihood)
                           |
-          +---------------+---------------+
-          |               |               |
-    Identifiability   Information     Observation
-    & Separability    Loss from       Scheme
-    (this repo)       Masking         Composition
-                      (this repo)     (this repo)
-          |
-          +-------+-------+-------+
-          |       |       |       |
-        Expo    Weibull  Model   Other
-        Case    Case     Select  Families
-        (done)  (planned)(paper) (planned)
+          +-------+-------+-------+-------+
+          |       |       |       |       |
+        Expo    Weibull  Model  Ident.  Determ.
+        Case    FIM      Select  & Info  Masking
+        (done)  (draft)  (done)  Loss    (submitted)
+                                (draft)
 ```
 
 ### Existing Papers/Repos
@@ -55,9 +49,6 @@ draft content.
 
 | Directory | Working Title | Novelty | Effort |
 |-----------|---------------|---------|--------|
-| [`identifiability-info-loss/`](identifiability-info-loss/) | Identifiability and Information Loss in Masked Series Systems | High | Medium |
-| [`observation-composition/`](observation-composition/) | Composable Observation Schemes for Masked Reliability Data | Medium | Low |
-| [`nesting-vs-structure/`](nesting-vs-structure/) | Statistical Parsimony vs Physical Structure in Series System Modeling | Medium | Low |
 | [`weibull-masked-fim/`](weibull-masked-fim/) | Closed-Form FIM for Weibull Series with Masked Failure Causes | Medium | High |
 | [`deterministic-masking/`](deterministic-masking/) | Information Recovery under Deterministic Masking | — | — |
 

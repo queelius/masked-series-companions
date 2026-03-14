@@ -49,9 +49,6 @@ These live as research briefs in the [`masked-series-companions`](./) repo:
 
 | Directory | Working Title | Novelty |
 |-----------|---------------|---------|
-| [`identifiability-info-loss/`](identifiability-info-loss/) | Identifiability and Information Loss in Masked Series Systems | Quantitative identifiability: graph-theoretic conditions, FIM decomposition, effective sample size, diagnostic design. (Absorbed 02-information-loss.) |
-| [`observation-composition/`](observation-composition/) | Composable Observation Schemes for Masked Reliability Data | Formal algebra of observation functors (right-censor, periodic inspection, mixtures). |
-| [`nesting-vs-structure/`](nesting-vs-structure/) | Statistical Parsimony vs Physical Structure | When should grouped components be collapsed vs constrained vs regularized? |
 | [`weibull-masked-fim/`](weibull-masked-fim/) | Closed-Form FIM for Weibull Series with Masked Failure Causes | Closed-form Fisher information, masking invariance of shape info, rate-block decomposition. |
 | [`deterministic-masking/`](deterministic-masking/) | Information Recovery under Deterministic Masking | Injective masking recovers complete-data FIM. Submitted to JSPI. |
 
@@ -159,9 +156,6 @@ Model selection paper ─────────────►   maskedcauses 
   (Weibull nesting chain,               uses exp/hom-wei/het-wei models
    nested LRT, AIC/BIC)
 
-Identifiability (planned) ─────────►   maskedcauses (simulation studies)
-Information loss (planned) ────────►   maskedcauses, algebraic.mle (FIM)
-Observation composition (planned) ─►   maskedcauses::observe_*() functors
 Weibull companion (planned) ───────►   maskedcauses::wei_series_md_c1_c2_c3
 Relaxed conditions paper ──────────►   mdrelax
 ```
@@ -247,23 +241,17 @@ MLE over the component hazard parameters.
 
 ### FIM Derivation Ownership
 
-weibull-masked-fim (Weibull MLE) is the primary source for the Weibull Fisher information
-matrix derivation. Paper 01 (Identifiability + Info Loss) should cite weibull-masked-fim
-for the Weibull FIM rather than deriving it independently. This creates a
-sequencing dependency: Paper 01 should not be submitted before weibull-masked-fim has at
-least a circulating draft with the FIM result.
+weibull-masked-fim is the primary source for the Weibull Fisher information
+matrix derivation.
 
 ### "Statistical Indistinguishability" Territory
 
 Three papers approach the question of when component structure becomes
 statistically invisible. Agreed division:
 
-- **Paper 01** owns: formal conditions (graph-theoretic, matrix-rank) for
-  identifiability failure
+- **Foundation paper** owns: identifiability conditions (graph-theoretic extension in `graph-identifiability.md`)
 - **Model selection paper** (+ `maskedcauses` vignette) owns: empirical LRT
   power curves for when statistical tests fail to distinguish component structure
-- **Paper 04** owns: decision-theoretic interpretation — when should
-  practitioners override statistical parsimony with engineering knowledge?
 
 ### Submission Sequencing
 
@@ -271,21 +259,13 @@ statistically invisible. Agreed division:
    the foundation paper and has the most clearly defined content
 2. **Foundation paper** should not be submitted until weibull-masked-fim has a circulating
    draft (the `towell2025weibull-series` citation must resolve to something)
-3. **Paper 01** depends on weibull-masked-fim's FIM derivation
-4. **Papers 03 and 04** are independent of the above sequencing
+3. **Foundation paper** depends on weibull-masked-fim's FIM derivation (citation `towell2025weibull-series`)
 
 ### Prior-Art Surveys
 
 All companion papers have `prior_art.last_survey: null`. Surveys needed before
 drafting:
 
-- **Paper 01**: identifiability graph theory in competing risks, Little & Rubin
-  fraction of missing information, effective sample size in multiple imputation,
-  compressed sensing / mixture identifiability
-- **Paper 03**: censoring composition in survival analysis, observation scheme
-  theory
-- **Paper 04**: model misspecification vs near-non-identifiability tradeoffs,
-  decision-theoretic model selection, MDL with known structure
 - **weibull-masked-fim**: Weibull series MLE in reliability literature, competing risks
   Weibull estimation
 
@@ -310,4 +290,4 @@ drafting:
 | `algebraic.dist` | Development | — |
 | `compositional.mle` | Development | — |
 | `hypothesize` | Development | — |
-| 5 planned companions | Research briefs | — |
+| 2 companions (1 submitted, 1 draft) | Active | — |
